@@ -28,6 +28,7 @@
       label: "Place Value with Integers",
       subject: "Number",
       yearBand: "Year 7",
+      yearTags: ["Year 7"],
       generatorType: "place-value-integers",
       difficultyLabel: {
         easy: "Thousands and simple ordering",
@@ -48,6 +49,7 @@
       label: "Factors, Multiples and Primes",
       subject: "Number",
       yearBand: "Year 7",
+      yearTags: ["Year 7"],
       generatorType: "factors-multiples-primes",
       difficultyLabel: {
         easy: "Basic factors and multiples",
@@ -68,6 +70,7 @@
       label: "Compare and Order Fractions",
       subject: "Number",
       yearBand: "Year 7",
+      yearTags: ["Year 7"],
       generatorType: "compare-order-fractions",
       difficultyLabel: {
         easy: "Simple denominators and unit fractions",
@@ -88,6 +91,7 @@
       label: "Algebraic Notation",
       subject: "Algebra",
       yearBand: "Year 7",
+      yearTags: ["Year 7"],
       generatorType: "algebraic-notation",
       difficultyLabel: {
         easy: "Simple word-to-expression forms",
@@ -108,6 +112,7 @@
       label: "Perimeter",
       subject: "Geometry and Measure",
       yearBand: "Year 7",
+      yearTags: ["Year 7"],
       generatorType: "perimeter",
       difficultyLabel: {
         easy: "Rectangles and simple polygons",
@@ -128,6 +133,7 @@
       label: "Angle Facts",
       subject: "Geometry and Measure",
       yearBand: "Year 7",
+      yearTags: ["Year 7"],
       generatorType: "angle-facts",
       difficultyLabel: {
         easy: "Angles on a line and around a point",
@@ -148,6 +154,7 @@
       label: "Add and Subtract Fractions",
       subject: "Number",
       yearBand: "Year 7",
+      yearTags: ["Year 7"],
       generatorType: "add-subtract-fractions",
       difficultyLabel: {
         easy: "Simple like denominators",
@@ -168,6 +175,7 @@
       label: "Ratio Notation and Simplification",
       subject: "Ratio and Proportion",
       yearBand: "Year 7",
+      yearTags: ["Year 7"],
       generatorType: "ratio-notation",
       difficultyLabel: {
         easy: "Simple whole-number ratios",
@@ -188,6 +196,7 @@
       label: "Collecting Like Terms",
       subject: "Algebra",
       yearBand: "Year 7",
+      yearTags: ["Year 7"],
       generatorType: "collecting-like-terms",
       difficultyLabel: {
         easy: "Positive terms with one variable",
@@ -208,6 +217,7 @@
       label: "Coordinates in Four Quadrants",
       subject: "Geometry and Measure",
       yearBand: "Year 7",
+      yearTags: ["Year 7"],
       generatorType: "coordinates-four-quadrants",
       difficultyLabel: {
         easy: "Reading and plotting points",
@@ -228,6 +238,7 @@
       label: "Place Value with Decimals",
       subject: "Number",
       yearBand: "Year 7",
+      yearTags: ["Year 7"],
       generatorType: "place-value-decimals",
       difficultyLabel: {
         easy: "Tenths and hundredths",
@@ -248,6 +259,7 @@
       label: "Fractions, Decimals and Percentages Links",
       subject: "Ratio and Proportion",
       yearBand: "Year 7",
+      yearTags: ["Year 7", "Year 8"],
       generatorType: "fdp-links",
       difficultyLabel: {
         easy: "Simple conversions with familiar values",
@@ -268,6 +280,7 @@
       label: "Function Machines",
       subject: "Algebra",
       yearBand: "Year 7",
+      yearTags: ["Year 7", "Year 8"],
       generatorType: "function-machines",
       difficultyLabel: {
         easy: "Single-step add and subtract rules",
@@ -288,6 +301,7 @@
       label: "Sequences",
       subject: "Algebra",
       yearBand: "Year 7",
+      yearTags: ["Year 7", "Year 8", "Year 9"],
       generatorType: "sequences",
       difficultyLabel: {
         easy: "Continue and describe linear patterns",
@@ -308,6 +322,7 @@
       label: "Decimal Operations",
       subject: "Number",
       yearBand: "Year 7",
+      yearTags: ["Year 7", "Year 8"],
       generatorType: "decimal-operations",
       difficultyLabel: {
         easy: "Add and subtract decimals",
@@ -328,6 +343,7 @@
       label: "Properties of 2D Shapes",
       subject: "Geometry and Measure",
       yearBand: "Year 7",
+      yearTags: ["Year 7", "Year 8"],
       generatorType: "properties-2d-shapes",
       difficultyLabel: {
         easy: "Identify and classify common polygons",
@@ -349,6 +365,7 @@
       label: "Square and Cube Numbers",
       subject: "Number",
       yearBand: "Year 7",
+      yearTags: ["Year 7", "Year 8"],
       generatorType: "square-cube-numbers",
       difficultyLabel: {
         easy: "Recognising small squares and cubes",
@@ -369,6 +386,7 @@
       label: "Four Operations with Integers",
       subject: "Number",
       yearBand: "Year 7",
+      yearTags: ["Year 7", "Year 8"],
       generatorType: "four-operations-integers",
       difficultyLabel: {
         easy: "Positive integer calculations",
@@ -389,6 +407,7 @@
       label: "Compare and Order Decimals",
       subject: "Number",
       yearBand: "Year 7",
+      yearTags: ["Year 7", "Year 8"],
       generatorType: "compare-order-decimals",
       difficultyLabel: {
         easy: "Tenths and simple hundredths",
@@ -409,6 +428,7 @@
       label: "Multiply Fractions by Integers",
       subject: "Number",
       yearBand: "Year 7",
+      yearTags: ["Year 7", "Year 8"],
       generatorType: "multiply-fractions-integers",
       difficultyLabel: {
         easy: "Unit fractions and small integers",
@@ -429,6 +449,7 @@
       label: "Fraction of an Amount",
       subject: "Number",
       yearBand: "Year 7",
+      yearTags: ["Year 7", "Year 8"],
       generatorType: "fraction-of-an-amount",
       difficultyLabel: {
         easy: "Unit fractions of simple amounts",
@@ -449,6 +470,7 @@
       label: "Area of Rectangles and Compound Shapes",
       subject: "Geometry and Measure",
       yearBand: "Year 7",
+      yearTags: ["Year 7", "Year 8"],
       generatorType: "area-rectangles-compound",
       difficultyLabel: {
         easy: "Rectangles and simple dimensions",
@@ -469,6 +491,7 @@
       label: "Transformations",
       subject: "Geometry and Measure",
       yearBand: "Year 7",
+      yearTags: ["Year 7", "Year 8"],
       generatorType: "transformations",
       difficultyLabel: {
         easy: "Translations and simple reflections",
@@ -489,6 +512,7 @@
       label: "Tables and Charts",
       subject: "Statistics",
       yearBand: "Year 7",
+      yearTags: ["Year 7"],
       generatorType: "tables-and-charts",
       difficultyLabel: {
         easy: "Simple frequency reading",
@@ -509,6 +533,7 @@
       label: "Mean, Median, Mode and Range",
       subject: "Statistics",
       yearBand: "Year 7",
+      yearTags: ["Year 7", "Year 8"],
       generatorType: "mean-median-mode-range",
       difficultyLabel: {
         easy: "Single measures on short lists",
@@ -529,6 +554,7 @@
       label: "Basic Probability Scale",
       subject: "Probability",
       yearBand: "Year 7",
+      yearTags: ["Year 7", "Year 8"],
       generatorType: "basic-probability-scale",
       difficultyLabel: {
         easy: "Impossible, unlikely, likely, certain",
@@ -549,6 +575,7 @@
       label: "Compare and Order Percentages",
       subject: "Ratio and Proportion",
       yearBand: "Year 7",
+      yearTags: ["Year 7", "Year 8"],
       generatorType: "compare-order-percentages",
       difficultyLabel: {
         easy: "Simple whole-number percentages",
@@ -569,6 +596,7 @@
       label: "Converting Metric Units",
       subject: "Geometry and Measure",
       yearBand: "Year 7",
+      yearTags: ["Year 7", "Year 8"],
       generatorType: "metric-unit-conversions",
       difficultyLabel: {
         easy: "mm-cm-m and g-kg basics",
@@ -589,6 +617,7 @@
       label: "Area of Triangles and Parallelograms",
       subject: "Geometry and Measure",
       yearBand: "Year 7",
+      yearTags: ["Year 7", "Year 8"],
       generatorType: "area-triangles-parallelograms",
       difficultyLabel: {
         easy: "Direct base-height calculations",
@@ -609,6 +638,7 @@
       label: "Scaling and Multiplicative Reasoning",
       subject: "Ratio and Proportion",
       yearBand: "Year 7",
+      yearTags: ["Year 7", "Year 8", "Year 9"],
       generatorType: "scaling-multiplicative-reasoning",
       difficultyLabel: {
         easy: "Simple scale up and scale down",
@@ -629,6 +659,7 @@
       label: "Proportion Problems",
       subject: "Ratio and Proportion",
       yearBand: "Year 7",
+      yearTags: ["Year 7", "Year 8", "Year 9"],
       generatorType: "proportion-problems",
       difficultyLabel: {
         easy: "Direct proportion with clean multiples",
@@ -649,6 +680,7 @@
       label: "Fraction-Decimal Conversions",
       subject: "Number",
       yearBand: "Year 7",
+      yearTags: ["Year 7", "Year 8"],
       generatorType: "fraction-decimal-conversions",
       difficultyLabel: {
         easy: "Simple tenths, quarters and halves",
@@ -669,6 +701,7 @@
       label: "Nets and 3D Shapes",
       subject: "Geometry and Measure",
       yearBand: "Year 7",
+      yearTags: ["Year 7", "Year 8"],
       generatorType: "nets-and-3d-shapes",
       difficultyLabel: {
         easy: "Faces, edges and vertices basics",
@@ -689,6 +722,7 @@
       label: "Symmetry and Reflection Properties",
       subject: "Geometry and Measure",
       yearBand: "Year 7",
+      yearTags: ["Year 7", "Year 8"],
       generatorType: "symmetry-reflection-properties",
       difficultyLabel: {
         easy: "Lines of symmetry",
@@ -709,6 +743,7 @@
       label: "Stem-and-Leaf and Frequency Diagrams",
       subject: "Statistics",
       yearBand: "Year 7",
+      yearTags: ["Year 7", "Year 8"],
       generatorType: "stem-leaf-frequency",
       difficultyLabel: {
         easy: "Reading and completing simple diagrams",
@@ -729,6 +764,7 @@
       label: "Relative Frequency Intro",
       subject: "Probability",
       yearBand: "Year 7",
+      yearTags: ["Year 7", "Year 8"],
       generatorType: "relative-frequency-intro",
       difficultyLabel: {
         easy: "Simple experimental outcomes",
@@ -745,10 +781,179 @@
         { id: "predict-and-justify", label: "Predict and Justify", description: "Pupils use relative frequency to make and justify simple predictions." }
       ]
     },
+    "percentages-of-amounts": {
+      label: "Percentages of Amounts",
+      subject: "Ratio and Proportion",
+      yearBand: "Year 8",
+      yearTags: ["Year 8", "Year 9"],
+      generatorType: "percentages-of-amounts",
+      difficultyLabel: {
+        easy: "10%, 25%, 50% and simple percentages",
+        medium: "Mixed percentages with one-step methods",
+        hard: "Less direct percentages and comparison reasoning"
+      },
+      objective: "Find percentages of amounts by changing one useful feature at a time: the percentage, the amount, the method, or the comparison.",
+      principle: "Keep the percentage structure close and vary one feature only: known benchmark percentage, multiplier, amount, or reasoning step.",
+      basedOn: "Year 8 percentages lesson structure",
+      variants: [
+        { id: "find-the-percentage", label: "Find the Percentage", description: "A direct sequence finding percentages of amounts with one small change each time." },
+        { id: "compare-methods", label: "Compare Methods", description: "Pupils compare efficient methods for finding percentages of amounts." },
+        { id: "missing-value", label: "Missing Value", description: "A reasoning sequence where one percentage part or total is missing." },
+        { id: "error-spotting", label: "Error Spotting", description: "A misconception sequence on common mistakes with percentage methods." }
+      ]
+    },
+    "standard-form-intro": {
+      label: "Standard Form Intro",
+      subject: "Number",
+      yearBand: "Year 8",
+      yearTags: ["Year 8", "Year 9", "Year 10"],
+      generatorType: "standard-form-intro",
+      difficultyLabel: {
+        easy: "Powers of 10 and large numbers",
+        medium: "Convert both ways and compare values",
+        hard: "Smaller decimals, negatives powers and reasoning"
+      },
+      objective: "Read, write and compare numbers in standard form by changing one feature at a time: the coefficient, power of ten, size, or direction of conversion.",
+      principle: "Keep the number close and vary one structural feature only: coefficient, exponent, ordinary form, or comparison target.",
+      basedOn: "Year 8 standard form introduction",
+      variants: [
+        { id: "write-standard-form", label: "Write in Standard Form", description: "A direct sequence converting ordinary numbers into standard form." },
+        { id: "write-ordinary-number", label: "Write as an Ordinary Number", description: "Pupils convert standard form back into ordinary numbers." },
+        { id: "compare-values", label: "Compare Values", description: "A sequence comparing near-identical numbers written in standard form." },
+        { id: "error-spotting", label: "Error Spotting", description: "A misconception sequence on coefficient size and powers of ten." }
+      ]
+    },
+    "indices-laws-intro": {
+      label: "Indices and Laws of Indices Intro",
+      subject: "Number",
+      yearBand: "Year 8",
+      yearTags: ["Year 8", "Year 9", "Year 10"],
+      generatorType: "indices-laws-intro",
+      difficultyLabel: {
+        easy: "Squares, cubes and repeated multiplication",
+        medium: "Simple index laws with one variable",
+        hard: "Mixed index laws and less direct forms"
+      },
+      objective: "Use index notation and simple index laws by changing one feature at a time: base, exponent, operation, or representation.",
+      principle: "Keep the power structure visible and vary one thing only: base, exponent, operation, or written form.",
+      basedOn: "Year 8 indices lesson structure",
+      variants: [
+        { id: "evaluate-powers", label: "Evaluate Powers", description: "A direct sequence evaluating simple powers and repeated multiplication." },
+        { id: "match-index-forms", label: "Match Index Forms", description: "Pupils match repeated multiplication to index notation and equivalent powers." },
+        { id: "apply-index-laws", label: "Apply Index Laws", description: "A sequence introducing multiplication and division index rules." },
+        { id: "missing-value", label: "Missing Value", description: "A reasoning sequence with one missing base, exponent or result." }
+      ]
+    },
+    "two-step-equations": {
+      label: "Two-step Equations",
+      subject: "Algebra",
+      yearBand: "Year 8",
+      yearTags: ["Year 8", "Year 9", "Year 10"],
+      generatorType: "two-step-equations",
+      difficultyLabel: {
+        easy: "Simple two-step forms",
+        medium: "Mixed operations and reversed layouts",
+        hard: "Brackets, negatives and less direct structures"
+      },
+      objective: "Solve two-step equations by changing one structural feature at a time: operation order, coefficient, sign, or layout.",
+      principle: "Keep the inverse-operation chain visible and vary one feature only: coefficient, constant, sign, or equation layout.",
+      basedOn: "Year 8 two-step equations lesson structure",
+      variants: [
+        { id: "solve-for-x", label: "Solve for x", description: "A direct fluency sequence solving two-step equations." },
+        { id: "which-equation", label: "Which Equation?", description: "Pupils identify which equation has a given solution." },
+        { id: "write-the-equation", label: "Write the Equation", description: "Pupils construct equations from given solutions and structures." },
+        { id: "error-spotting", label: "Error Spotting", description: "A misconception sequence on inverse-operation order." }
+      ]
+    },
+    "straight-line-graphs-intro": {
+      label: "Straight-line Graphs Intro",
+      subject: "Algebra",
+      yearBand: "Year 8",
+      yearTags: ["Year 8", "Year 9", "Year 10"],
+      generatorType: "straight-line-graphs-intro",
+      difficultyLabel: {
+        easy: "Plotting from simple rules",
+        medium: "Reading gradients and intercepts",
+        hard: "Equation matching and missing points"
+      },
+      objective: "Connect tables, coordinates and equations of straight lines by changing one feature at a time: gradient, intercept, point, or representation.",
+      principle: "Keep the linear relationship stable and vary one feature only: x-value, y-value, gradient, intercept, or equation form.",
+      basedOn: "Year 8 straight-line graphs lesson structure",
+      variants: [
+        { id: "plot-from-rule", label: "Plot from Rule", description: "A direct sequence plotting points from simple linear rules." },
+        { id: "read-gradient", label: "Read the Gradient", description: "Pupils decide the gradient or steepness change from shown linear points." },
+        { id: "match-equation", label: "Match the Equation", description: "A sequence connecting a line's pattern to its equation." },
+        { id: "missing-point", label: "Missing Point", description: "A reasoning sequence with one missing coordinate on a line." }
+      ]
+    },
+    "pythagoras": {
+      label: "Pythagoras",
+      subject: "Geometry and Measure",
+      yearBand: "Year 9",
+      yearTags: ["Year 9", "Year 10", "Year 11"],
+      generatorType: "pythagoras",
+      difficultyLabel: {
+        easy: "Integer triples and direct missing side questions",
+        medium: "Mixed missing sides and square roots",
+        hard: "Less obvious triples and comparison reasoning"
+      },
+      objective: "Use Pythagoras' theorem by changing one feature at a time: missing side, hypotenuse position, square calculation, or reasoning demand.",
+      principle: "Keep the right-angled triangle structure steady and vary one side-length feature only.",
+      basedOn: "Year 9 Pythagoras lesson structure",
+      variants: [
+        { id: "find-the-missing-side", label: "Find the Missing Side", description: "A direct fluency sequence using Pythagoras to find a missing side." },
+        { id: "which-side", label: "Which Side?", description: "Pupils decide which side is the hypotenuse or which value fits the triangle." },
+        { id: "compare-triangles", label: "Compare Triangles", description: "A sequence comparing triangle side lengths using Pythagoras." },
+        { id: "error-spotting", label: "Error Spotting", description: "A misconception sequence on identifying the hypotenuse and using the theorem correctly." }
+      ]
+    },
+    "compound-measures": {
+      label: "Compound Measures",
+      subject: "Ratio and Proportion",
+      yearBand: "Year 9",
+      yearTags: ["Year 9", "Year 10", "Year 11"],
+      generatorType: "compound-measures",
+      difficultyLabel: {
+        easy: "Speed, distance and time basics",
+        medium: "Mixed speed, density and pressure style forms",
+        hard: "Less direct missing values and comparison reasoning"
+      },
+      objective: "Use compound measures by changing one feature at a time: formula, known pair, missing quantity, or comparison target.",
+      principle: "Keep the multiplicative relationship close and vary one feature only: measure type, missing value, units, or method.",
+      basedOn: "Year 9 compound measures lesson structure",
+      variants: [
+        { id: "find-the-measure", label: "Find the Measure", description: "A direct sequence calculating speed, density or pressure style measures." },
+        { id: "rearrange-the-formula", label: "Rearrange the Formula", description: "Pupils decide which rearranged form is needed for the unknown quantity." },
+        { id: "missing-value", label: "Missing Value", description: "A reasoning sequence where one quantity in a compound measure relationship is missing." },
+        { id: "compare-rates", label: "Compare Rates", description: "Pupils compare which situation has the greater rate or measure." }
+      ]
+    },
+    "simultaneous-equations-intro": {
+      label: "Simultaneous Equations Intro",
+      subject: "Algebra",
+      yearBand: "Year 9",
+      yearTags: ["Year 9", "Year 10", "Year 11"],
+      generatorType: "simultaneous-equations-intro",
+      difficultyLabel: {
+        easy: "Simple elimination with small integers",
+        medium: "Mixed elimination and substitution-style forms",
+        hard: "Larger coefficients and less direct structures"
+      },
+      objective: "Solve pairs of linear equations by changing one structural feature at a time: coefficient, elimination step, sign, or representation.",
+      principle: "Keep the equation pair close and vary one feature only: coefficient, matching term, sign, or solution target.",
+      basedOn: "Year 9 simultaneous equations introduction",
+      variants: [
+        { id: "solve-the-pair", label: "Solve the Pair", description: "A direct sequence solving simple pairs of simultaneous equations." },
+        { id: "which-pair", label: "Which Pair?", description: "Pupils identify which pair of equations has a given solution." },
+        { id: "write-the-pair", label: "Write the Pair", description: "Pupils construct a simple pair of equations from a known solution." },
+        { id: "error-spotting", label: "Error Spotting", description: "A misconception sequence on elimination and substitution mistakes." }
+      ]
+    },
     "equivalent-fractions": {
       label: "Equivalent Fractions",
       subject: "Number",
       yearBand: "Years 5-7",
+      yearTags: ["Year 7"],
       generatorType: "equivalent-fractions",
       difficultyLabel: {
         easy: "Introductory scaling",
@@ -769,6 +974,7 @@
       label: "Order of Operations",
       subject: "Number",
       yearBand: "Years 6-8",
+      yearTags: ["Year 7", "Year 8"],
       generatorType: "order-of-operations",
       difficultyLabel: {
         easy: "Two-step expressions",
@@ -789,6 +995,7 @@
       label: "One-step Equations",
       subject: "Algebra",
       yearBand: "Years 7-8",
+      yearTags: ["Year 7", "Year 8"],
       generatorType: "one-step-equations",
       difficultyLabel: {
         easy: "Additive equations",
@@ -809,6 +1016,7 @@
       label: "Expanding Brackets",
       subject: "Algebra",
       yearBand: "Years 7-9",
+      yearTags: ["Year 7", "Year 8", "Year 9"],
       generatorType: "expanding-brackets",
       difficultyLabel: {
         easy: "Single variable and positive terms",
@@ -827,6 +1035,7 @@
       label: "Negative Numbers",
       subject: "Number",
       yearBand: "Years 6-8",
+      yearTags: ["Year 7", "Year 8"],
       generatorType: "negative-numbers",
       difficultyLabel: {
         easy: "Signed addition and subtraction",
@@ -845,6 +1054,7 @@
       label: "Substitution",
       subject: "Algebra",
       yearBand: "Years 7-9",
+      yearTags: ["Year 7", "Year 8", "Year 9"],
       generatorType: "substitution",
       difficultyLabel: {
         easy: "Single variable substitution",

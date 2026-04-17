@@ -24,6 +24,14 @@ const generators = {
   "symmetry-reflection-properties": generateSymmetryReflectionProperties,
   "stem-leaf-frequency": generateStemLeafFrequency,
   "relative-frequency-intro": generateRelativeFrequencyIntro,
+  "percentages-of-amounts": generatePercentagesOfAmounts,
+  "standard-form-intro": generateStandardFormIntro,
+  "indices-laws-intro": generateIndicesLawsIntro,
+  "two-step-equations": generateTwoStepEquations,
+  "straight-line-graphs-intro": generateStraightLineGraphsIntro,
+  pythagoras: generatePythagoras,
+  "compound-measures": generateCompoundMeasures,
+  "simultaneous-equations-intro": generateSimultaneousEquationsIntro,
   "algebraic-notation": generateAlgebraicNotation,
   perimeter: generatePerimeter,
   "angle-facts": generateAngleFacts,
@@ -69,6 +77,14 @@ const teachingGenerators = {
   "symmetry-reflection-properties": generateSymmetryReflectionPropertiesTeaching,
   "stem-leaf-frequency": generateStemLeafFrequencyTeaching,
   "relative-frequency-intro": generateRelativeFrequencyIntroTeaching,
+  "percentages-of-amounts": generatePercentagesOfAmountsTeaching,
+  "standard-form-intro": generateStandardFormIntroTeaching,
+  "indices-laws-intro": generateIndicesLawsIntroTeaching,
+  "two-step-equations": generateTwoStepEquationsTeaching,
+  "straight-line-graphs-intro": generateStraightLineGraphsIntroTeaching,
+  pythagoras: generatePythagorasTeaching,
+  "compound-measures": generateCompoundMeasuresTeaching,
+  "simultaneous-equations-intro": generateSimultaneousEquationsIntroTeaching,
   "algebraic-notation": generateAlgebraicNotationTeaching,
   perimeter: generatePerimeterTeaching,
   "angle-facts": generateAngleFactsTeaching,
@@ -91,6 +107,7 @@ const teachingGenerators = {
 };
 
 const form = document.getElementById("generator-form");
+const yearFilterSelect = document.getElementById("year-filter");
 const topicSelect = document.getElementById("topic");
 const difficultySelect = document.getElementById("difficulty");
 const variantSelect = document.getElementById("variant");
@@ -118,12 +135,110 @@ const reasoningAnswerKey = document.getElementById("reasoning-answer-key");
 const answerToggle = document.getElementById("toggle-answers");
 const changeNotesToggle = document.getElementById("toggle-change-notes");
 let generationCounter = 0;
+const secondaryYearSequence = ["Year 7", "Year 8", "Year 9", "Year 10", "Year 11"];
 
-function initializeWorksheetPage() {
-  if (!form || !topicSelect || !difficultySelect || !variantSelect || !bulkCountSelect || !generateButton) {
+function getTopicYearTags(topic) {
+  if (!topic) {
+    return [];
+  }
+
+  if (Array.isArray(topic.yearTags) && topic.yearTags.length) {
+    return topic.yearTags;
+  }
+
+  const yearBand = String(topic.yearBand || "");
+  const years = new Set();
+  const rangeMatch = yearBand.match(/Year[s]?\s+(\d+)\s*-\s*(\d+)/i);
+
+  if (rangeMatch) {
+    const start = Number.parseInt(rangeMatch[1], 10);
+    const end = Number.parseInt(rangeMatch[2], 10);
+    for (let year = Math.min(start, end); year <= Math.max(start, end); year += 1) {
+      if (year >= 7 && year <= 11) {
+        years.add(`Year ${year}`);
+      }
+    }
+  } else {
+    const matches = yearBand.match(/\d+/g) || [];
+    matches.forEach((value) => {
+      const year = Number.parseInt(value, 10);
+      if (year >= 7 && year <= 11) {
+        years.add(`Year ${year}`);
+      }
+    });
+  }
+
+  topic.yearTags = secondaryYearSequence.filter((year) => years.has(year));
+  return topic.yearTags;
+}
+
+function getAvailableYearOptions(topicEntries = Object.entries(topicCatalog)) {
+  const available = new Set();
+  topicEntries.forEach(([, topic]) => {
+    getTopicYearTags(topic).forEach((year) => available.add(year));
+  });
+  return ["All years", ...secondaryYearSequence.filter((year) => available.has(year))];
+}
+
+function getFilteredTopicEntries(selectedYear = "All years") {
+  return Object.entries(topicCatalog).filter(([, topic]) => {
+    return selectedYear === "All years" || getTopicYearTags(topic).includes(selectedYear);
+  });
+}
+
+function groupTopicEntriesBySubject(topicEntries) {
+  return topicEntries.reduce((groups, [topicKey, topic]) => {
+    if (!groups[topic.subject]) {
+      groups[topic.subject] = [];
+    }
+
+    groups[topic.subject].push([topicKey, topic]);
+    return groups;
+  }, {});
+}
+
+function getSelectedYearFilterValue(select = yearFilterSelect) {
+  return select?.value || "All years";
+}
+
+function populateYearFilterSelect(select = yearFilterSelect) {
+  if (!select) {
     return;
   }
 
+  const previousValue = select.value || "All years";
+  const options = getAvailableYearOptions();
+  select.innerHTML = "";
+
+  options.forEach((value) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = value;
+    select.appendChild(option);
+  });
+
+  select.value = options.includes(previousValue) ? previousValue : "All years";
+}
+
+function updateGeneratorAvailability() {
+  const hasTopic = !!topicSelect?.value;
+  if (topicSelect) {
+    topicSelect.disabled = !hasTopic;
+  }
+  if (variantSelect) {
+    variantSelect.disabled = !hasTopic;
+  }
+  if (generateButton) {
+    generateButton.disabled = !hasTopic;
+  }
+}
+
+function initializeWorksheetPage() {
+  if (!form || !yearFilterSelect || !topicSelect || !difficultySelect || !variantSelect || !bulkCountSelect || !generateButton) {
+    return;
+  }
+
+  populateYearFilterSelect();
   populateTopicSelect();
   populateVariantSelect();
   updateGenerateButtonLabel();
@@ -148,6 +263,14 @@ function initializeWorksheetPage() {
   }
 
   topicSelect.addEventListener("change", () => {
+    populateVariantSelect();
+    updateTopicDetails();
+    generationCounter += 1;
+    renderWorksheet({ forceFresh: true });
+  });
+
+  yearFilterSelect.addEventListener("change", () => {
+    populateTopicSelect();
     populateVariantSelect();
     updateTopicDetails();
     generationCounter += 1;
@@ -188,16 +311,22 @@ function initializeWorksheetPage() {
 }
 
 function populateTopicSelect() {
+  const selectedYear = getSelectedYearFilterValue();
+  const previousValue = topicSelect.value;
   topicSelect.innerHTML = "";
 
-  const groupedTopics = Object.entries(topicCatalog).reduce((groups, [topicKey, topic]) => {
-    if (!groups[topic.subject]) {
-      groups[topic.subject] = [];
-    }
+  const filteredEntries = getFilteredTopicEntries(selectedYear);
+  const groupedTopics = groupTopicEntriesBySubject(filteredEntries);
 
-    groups[topic.subject].push([topicKey, topic]);
-    return groups;
-  }, {});
+  if (!filteredEntries.length) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = `No topics available for ${selectedYear}`;
+    topicSelect.appendChild(option);
+    topicSelect.value = "";
+    updateGeneratorAvailability();
+    return;
+  }
 
   Object.entries(groupedTopics).forEach(([subject, topics]) => {
     const group = document.createElement("optgroup");
@@ -213,10 +342,20 @@ function populateTopicSelect() {
     topicSelect.appendChild(group);
   });
 
-  topicSelect.value = defaultTopic;
+  const availableTopicKeys = filteredEntries.map(([topicKey]) => topicKey);
+  topicSelect.value = availableTopicKeys.includes(previousValue)
+    ? previousValue
+    : (availableTopicKeys.includes(defaultTopic) ? defaultTopic : availableTopicKeys[0]);
+  updateGeneratorAvailability();
 }
 
 function populateVariantSelect() {
+  if (!topicSelect.value) {
+    variantSelect.innerHTML = "";
+    updateGeneratorAvailability();
+    return;
+  }
+
   const topic = topicCatalog[topicSelect.value];
   variantSelect.innerHTML = "";
 
@@ -237,6 +376,15 @@ function getSelectedVariant() {
 
 function updateTopicDetails() {
   if (!topicSelect || !difficultySelect || !principle) {
+    return;
+  }
+  if (!topicSelect.value || !topicCatalog[topicSelect.value]) {
+    principle.textContent = "Choose a year and topic to see the lesson structure.";
+    metaSubject.textContent = "—";
+    metaYear.textContent = getSelectedYearFilterValue();
+    metaObjective.textContent = "No topic selected.";
+    metaDifficulty.textContent = "—";
+    metaVariant.textContent = "—";
     return;
   }
   const topic = topicCatalog[topicSelect.value];
@@ -268,6 +416,21 @@ function updateGenerateButtonLabel() {
 
 function renderWorksheet(options = {}) {
   if (!topicSelect || !difficultySelect || !variantSelect || !title || !questionList) {
+    return;
+  }
+  if (!topicSelect.value || !topicCatalog[topicSelect.value]) {
+    title.textContent = `No topics available for ${getSelectedYearFilterValue()}`;
+    worksheetTitle.textContent = "Worksheet";
+    worksheetMeta.textContent = "Select another year group to continue.";
+    teachingSequence.innerHTML = "";
+    questionList.innerHTML = "";
+    reasoningList.innerHTML = "";
+    worksheetQuestions.innerHTML = "";
+    worksheetReasoningQuestions.innerHTML = "";
+    answerKey.innerHTML = "";
+    reasoningAnswerKey.innerHTML = "";
+    updateAnswerVisibility();
+    updateChangeNoteVisibility();
     return;
   }
   const { forceFresh = false } = options;
@@ -1200,6 +1363,854 @@ function buildAnswerItem(item, index, prefix = "") {
   return entry;
 }
 
+function generatePercentagesOfAmountsTeaching(topic, variant, settings, difficultyKey) {
+  const base = getPercentageAmountBase(settings, difficultyKey);
+  let sequence;
+
+  if (variant.id === "compare-methods") {
+    sequence = [
+      { question: `To find 25% of ${base.amounts[0]}, is it more efficient to divide by 4 or find 10% first?`, answer: "Divide by 4.", change: "Model choosing an efficient benchmark method." },
+      { question: `To find 15% of ${base.amounts[1]}, is it useful to combine 10% and 5%?`, answer: "Yes.", change: "Only the percentage changes." },
+      { question: `To find 40% of ${base.amounts[2]}, would 4 x 10% be a sensible route?`, answer: "Yes.", change: "Only the method emphasis changes." }
+    ];
+  } else if (variant.id === "missing-value") {
+    sequence = [
+      { question: `10% of a number is ${base.amounts[0] / 10}. What is the whole number?`, answer: `${base.amounts[0]}`, change: "Model rebuilding the whole from a benchmark percentage." },
+      { question: `25% of a number is ${base.amounts[1] / 4}. What is the whole number?`, answer: `${base.amounts[1]}`, change: "Only the percentage changes." },
+      { question: `${base.percents[2]}% of a number is ${Math.round(base.amounts[2] * base.percents[2] / 100)}. What is the number?`, answer: `${base.amounts[2]}`, change: "Only the benchmark becomes less direct." }
+    ];
+  } else if (variant.id === "error-spotting") {
+    sequence = [
+      { question: `A pupil says 10% of ${base.amounts[0]} is ${base.amounts[0]}. Is that correct?`, answer: "No.", change: "Model checking what 10% means." },
+      { question: `Correct 25% of ${base.amounts[1]} = ${base.amounts[1] / 2}.`, answer: `${base.amounts[1] / 4}`, change: "Only the percentage changes." },
+      { question: `True or false: 50% of an amount is the same as halving it.`, answer: "True.", change: "Only the task changes to the general rule." }
+    ];
+  } else {
+    sequence = [
+      { question: `Find 10% of ${base.amounts[0]}.`, answer: `${base.amounts[0] / 10}`, change: "Model finding 10% first." },
+      { question: `Find 25% of ${base.amounts[1]}.`, answer: `${base.amounts[1] / 4}`, change: "Only the benchmark percentage changes." },
+      { question: `Find ${base.percents[2]}% of ${base.amounts[2]}.`, answer: `${Math.round(base.amounts[2] * base.percents[2] / 100)}`, change: "Only the percentage becomes less direct." }
+    ];
+  }
+
+  return createTeachingSequence(topic, variant, sequence);
+}
+
+function generatePercentagesOfAmounts(_topic, variant, settings, difficultyKey) {
+  const base = getPercentageAmountBase(settings, difficultyKey);
+
+  if (variant.id === "compare-methods") {
+    return { questions: base.compareMethods.map((item, index) => ({ question: item.question, answer: item.answer, change: percentageAmountChange(index) })) };
+  }
+  if (variant.id === "missing-value") {
+    return { questions: base.missingValues.map((item, index) => ({ question: item.question, answer: item.answer, change: percentageAmountChange(index) })) };
+  }
+  if (variant.id === "error-spotting") {
+    return { questions: base.errors.map((item, index) => ({ question: item.question, answer: item.answer, change: percentageAmountChange(index) })) };
+  }
+  return { questions: base.directs.map((item, index) => ({ question: item.question, answer: item.answer, change: percentageAmountChange(index) })) };
+}
+
+function getPercentageAmountBase(_settings, difficultyKey) {
+  const amountBank = difficultyKey === "easy"
+    ? [40, 60, 80, 90, 120, 140, 160, 180, 200, 240]
+    : difficultyKey === "hard"
+      ? [75, 120, 180, 240, 320, 360, 420, 480, 540, 600]
+      : [50, 80, 100, 120, 150, 180, 200, 240, 300, 360];
+  const percentBank = difficultyKey === "easy"
+    ? [10, 25, 50, 20, 5, 75, 40, 60, 30, 15]
+    : difficultyKey === "hard"
+      ? [15, 35, 45, 12, 18, 22, 65, 75, 30, 40]
+      : [10, 20, 25, 15, 30, 40, 50, 60, 5, 75];
+
+  const directs = amountBank.map((amount, index) => {
+    const percent = percentBank[index];
+    return {
+      question: `Find ${percent}% of ${amount}.`,
+      answer: `${trimTrailingZero(amount * percent / 100)}`
+    };
+  });
+
+  const compareMethods = amountBank.map((amount, index) => {
+    const percent = percentBank[index];
+    const method = percent === 25 ? "divide by 4"
+      : percent === 50 ? "halve it"
+      : percent === 10 ? "divide by 10"
+      : percent === 5 ? "find 10% then halve it"
+      : percent % 10 === 0 ? `find 10% then multiply by ${percent / 10}`
+      : "split it into easier benchmark percentages";
+    return {
+      question: `What is the most efficient method to find ${percent}% of ${amount}?`,
+      answer: method
+    };
+  });
+
+  const missingValues = amountBank.map((amount, index) => {
+    const percent = percentBank[index];
+    const part = trimTrailingZero(amount * percent / 100);
+    return {
+      question: `${percent}% of a number is ${part}. What is the whole number?`,
+      answer: `${amount}`
+    };
+  });
+
+  const errors = amountBank.map((amount, index) => {
+    const percent = percentBank[index];
+    const wrong = trimTrailingZero(percent === 25 ? amount / 2 : amount * (percent / 10));
+    const correct = trimTrailingZero(amount * percent / 100);
+    return {
+      question: `A pupil says ${percent}% of ${amount} is ${wrong}. Correct the answer.`,
+      answer: `${correct}`
+    };
+  });
+
+  return { amounts: amountBank, percents: percentBank, directs, compareMethods, missingValues, errors };
+}
+
+function generateStandardFormIntroTeaching(topic, variant, settings, difficultyKey) {
+  const base = getStandardFormBase(settings, difficultyKey);
+  let sequence;
+
+  if (variant.id === "write-ordinary-number") {
+    sequence = [
+      { question: `Write ${base.standardPairs[0].standard} as an ordinary number.`, answer: base.standardPairs[0].ordinary, change: "Model moving the digits using the power of ten." },
+      { question: `Write ${base.standardPairs[1].standard} as an ordinary number.`, answer: base.standardPairs[1].ordinary, change: "Only the exponent changes." },
+      { question: `Write ${base.standardPairs[2].standard} as an ordinary number.`, answer: base.standardPairs[2].ordinary, change: "Only the coefficient changes." }
+    ];
+  } else if (variant.id === "compare-values") {
+    sequence = [
+      { question: `Which is greater: ${base.comparePairs[0].left} or ${base.comparePairs[0].right}?`, answer: base.comparePairs[0].answer, change: "Model comparing exponents first." },
+      { question: `Which is greater: ${base.comparePairs[1].left} or ${base.comparePairs[1].right}?`, answer: base.comparePairs[1].answer, change: "Only one exponent changes." },
+      { question: `Which is greater: ${base.comparePairs[2].left} or ${base.comparePairs[2].right}?`, answer: base.comparePairs[2].answer, change: "Only the coefficient changes." }
+    ];
+  } else if (variant.id === "error-spotting") {
+    sequence = [
+      { question: `A pupil writes 430000 as 43 x 10^4. Is that standard form?`, answer: "No.", change: "Model checking the coefficient is between 1 and 10." },
+      { question: `Correct 430000 into standard form.`, answer: `4.3 x 10^5`, change: "Only the task changes from spotting to correcting." },
+      { question: `True or false: in standard form, the coefficient must be at least 1 but less than 10.`, answer: "True.", change: "Only the focus shifts to the rule." }
+    ];
+  } else {
+    sequence = [
+      { question: `Write ${base.standardPairs[0].ordinary} in standard form.`, answer: base.standardPairs[0].standard, change: "Model choosing a coefficient between 1 and 10." },
+      { question: `Write ${base.standardPairs[1].ordinary} in standard form.`, answer: base.standardPairs[1].standard, change: "Only the size changes." },
+      { question: `Write ${base.standardPairs[2].ordinary} in standard form.`, answer: base.standardPairs[2].standard, change: "Only the coefficient changes." }
+    ];
+  }
+
+  return createTeachingSequence(topic, variant, sequence);
+}
+
+function generateStandardFormIntro(_topic, variant, settings, difficultyKey) {
+  const base = getStandardFormBase(settings, difficultyKey);
+  if (variant.id === "write-ordinary-number") return { questions: base.writeOrdinary.map((item, index) => ({ question: item.question, answer: item.answer, change: standardFormChange(index) })) };
+  if (variant.id === "compare-values") return { questions: base.compares.map((item, index) => ({ question: item.question, answer: item.answer, change: standardFormChange(index) })) };
+  if (variant.id === "error-spotting") return { questions: base.errors.map((item, index) => ({ question: item.question, answer: item.answer, change: standardFormChange(index) })) };
+  return { questions: base.writeStandard.map((item, index) => ({ question: item.question, answer: item.answer, change: standardFormChange(index) })) };
+}
+
+function getStandardFormBase(_settings, difficultyKey) {
+  const ordinaryValues = difficultyKey === "easy"
+    ? ["30000", "450000", "6700000", "82000", "910000", "5600000", "740000", "2800000", "65000", "9200000"]
+    : difficultyKey === "hard"
+      ? ["0.00045", "0.0032", "54000000", "720000000", "0.0000081", "6300000", "0.0094", "82000000", "0.00056", "910000000"]
+      : ["45000", "320000", "6700000", "0.0045", "0.032", "54000000", "0.00081", "620000", "0.0094", "8700000"];
+
+  const standardPairs = ordinaryValues.map((value) => ({ ordinary: value, standard: toStandardFormString(value) }));
+  const writeStandard = standardPairs.map((item) => ({ question: `Write ${item.ordinary} in standard form.`, answer: item.standard }));
+  const writeOrdinary = standardPairs.map((item) => ({ question: `Write ${item.standard} as an ordinary number.`, answer: item.ordinary }));
+  const compares = standardPairs.map((item, index) => {
+    const other = standardPairs[(index + 1) % standardPairs.length];
+    const answer = Number(item.ordinary) > Number(other.ordinary) ? item.standard : other.standard;
+    return { question: `Which is greater: ${item.standard} or ${other.standard}?`, answer };
+  });
+  const errors = standardPairs.map((item) => {
+    const coeffMatch = item.standard.match(/^([0-9.]+) x 10\^(-?\d+)$/);
+    const wrong = coeffMatch ? `${Number(coeffMatch[1]) * 10} x 10^${Number(coeffMatch[2]) - 1}` : item.standard;
+    return { question: `Correct this so it is in standard form: ${wrong}`, answer: item.standard };
+  });
+  return {
+    standardPairs,
+    writeStandard,
+    writeOrdinary,
+    compares,
+    errors,
+    comparePairs: compares.slice(0, 3).map((item) => ({ ...item, left: item.question.split(": ")[1].split(" or ")[0], right: item.question.split(" or ")[1].replace("?", ""), answer: item.answer }))
+  };
+}
+
+function toStandardFormString(value) {
+  const number = Number(value);
+  if (number === 0) return "0";
+  const exponent = Math.floor(Math.log10(Math.abs(number)));
+  const coefficient = number / (10 ** exponent);
+  return `${trimTrailingZero(coefficient)} x 10^${exponent}`;
+}
+
+function generateIndicesLawsIntroTeaching(topic, variant, settings, difficultyKey) {
+  const base = getIndicesBase(settings, difficultyKey);
+  let sequence;
+
+  if (variant.id === "match-index-forms") {
+    sequence = [
+      { question: `Write ${base.repeatForms[0].expanded} using index notation.`, answer: base.repeatForms[0].index, change: "Model turning repeated multiplication into a power." },
+      { question: `Write ${base.repeatForms[1].expanded} using index notation.`, answer: base.repeatForms[1].index, change: "Only the exponent changes." },
+      { question: `Which repeated multiplication matches ${base.repeatForms[2].index}?`, answer: base.repeatForms[2].expanded, change: "Only the direction of matching changes." }
+    ];
+  } else if (variant.id === "apply-index-laws") {
+    sequence = [
+      { question: `Simplify ${base.lawItems[0].question}.`, answer: base.lawItems[0].answer, change: "Model adding powers when multiplying the same base." },
+      { question: `Simplify ${base.lawItems[1].question}.`, answer: base.lawItems[1].answer, change: "Only the operation changes." },
+      { question: `Simplify ${base.lawItems[2].question}.`, answer: base.lawItems[2].answer, change: "Only the exponent values change." }
+    ];
+  } else if (variant.id === "missing-value") {
+    sequence = [
+      { question: `${base.missingItems[0].question}`, answer: base.missingItems[0].answer, change: "Model one missing exponent." },
+      { question: `${base.missingItems[1].question}`, answer: base.missingItems[1].answer, change: "Only the base changes." },
+      { question: `${base.missingItems[2].question}`, answer: base.missingItems[2].answer, change: "Only the law changes." }
+    ];
+  } else {
+    sequence = [
+      { question: `Evaluate ${base.evalItems[0].question}.`, answer: base.evalItems[0].answer, change: "Model a square or cube as repeated multiplication." },
+      { question: `Evaluate ${base.evalItems[1].question}.`, answer: base.evalItems[1].answer, change: "Only the base changes." },
+      { question: `Evaluate ${base.evalItems[2].question}.`, answer: base.evalItems[2].answer, change: "Only the exponent changes." }
+    ];
+  }
+
+  return createTeachingSequence(topic, variant, sequence);
+}
+
+function generateIndicesLawsIntro(_topic, variant, settings, difficultyKey) {
+  const base = getIndicesBase(settings, difficultyKey);
+  if (variant.id === "match-index-forms") return { questions: base.matchItems.map((item, index) => ({ question: item.question, answer: item.answer, change: indicesChange(index) })) };
+  if (variant.id === "apply-index-laws") return { questions: base.lawItems.map((item, index) => ({ question: item.question, answer: item.answer, change: indicesChange(index) })) };
+  if (variant.id === "missing-value") return { questions: base.missingItems.map((item, index) => ({ question: item.question, answer: item.answer, change: indicesChange(index) })) };
+  return { questions: base.evalItems.map((item, index) => ({ question: item.question, answer: item.answer, change: indicesChange(index) })) };
+}
+
+function getIndicesBase(_settings, difficultyKey) {
+  const bases = difficultyKey === "easy" ? [2, 3, 4, 5, 6] : difficultyKey === "hard" ? [2, 3, 5, 7, 10] : [2, 3, 4, 5, 8];
+  const evalItems = Array.from({ length: 10 }, (_, index) => {
+    const base = bases[index % bases.length];
+    const exponent = difficultyKey === "easy" ? 2 + (index % 2) : 2 + (index % 3);
+    return { question: `${base}^${exponent}`, answer: `${base ** exponent}` };
+  });
+  const repeatForms = Array.from({ length: 10 }, (_, index) => {
+    const base = bases[index % bases.length];
+    const exponent = 2 + (index % 3);
+    return { expanded: Array.from({ length: exponent }, () => base).join(" x "), index: `${base}^${exponent}` };
+  });
+  const matchItems = repeatForms.map((item, index) => ({
+    question: index % 2 === 0 ? `Write ${item.expanded} using index notation.` : `Write ${item.index} as repeated multiplication.`,
+    answer: index % 2 === 0 ? item.index : item.expanded
+  }));
+  const lawItems = Array.from({ length: 10 }, (_, index) => {
+    const base = ["x", "a", "b"][index % 3];
+    const m = 2 + (index % 3);
+    const n = 1 + (index % 4);
+    return index % 2 === 0
+      ? { question: `${base}^${m} x ${base}^${n}`, answer: `${base}^${m + n}` }
+      : { question: `${base}^${m + n} / ${base}^${n}`, answer: `${base}^${m}` };
+  });
+  const missingItems = Array.from({ length: 10 }, (_, index) => {
+    const base = ["x", "a", "b"][index % 3];
+    const m = 2 + (index % 3);
+    const n = 1 + (index % 3);
+    return index % 2 === 0
+      ? { question: `${base}^${m} x ${base}^? = ${base}^${m + n}`, answer: `${n}` }
+      : { question: `${base}^${m + n} / ${base}^? = ${base}^${m}`, answer: `${n}` };
+  });
+  return { evalItems, repeatForms, matchItems, lawItems, missingItems };
+}
+
+function generateTwoStepEquationsTeaching(topic, variant, settings, difficultyKey) {
+  const base = getTwoStepEquationBase(settings, difficultyKey);
+  let sequence;
+
+  if (variant.id === "which-equation") {
+    sequence = [
+      { question: `Which equation has solution x = ${base.solutions[0]}? A) ${base.whichItems[0].correct} B) ${base.whichItems[0].wrong}`, answer: "A", change: "Model checking by substitution." },
+      { question: `Which equation has solution x = ${base.solutions[1]}? A) ${base.whichItems[1].correct} B) ${base.whichItems[1].wrong}`, answer: "A", change: "Only the structure changes." },
+      { question: `Which equation has solution x = ${base.solutions[2]}? A) ${base.whichItems[2].correct} B) ${base.whichItems[2].wrong}`, answer: "A", change: "Only the coefficient changes." }
+    ];
+  } else if (variant.id === "write-the-equation") {
+    sequence = [
+      { question: `Write a two-step equation with solution x = ${base.solutions[0]} using the form 2x + c = ?.`, answer: base.writeItems[0].answer, change: "Model building from a known solution." },
+      { question: `Write a two-step equation with solution x = ${base.solutions[1]} using the form 3x - c = ?.`, answer: base.writeItems[1].answer, change: "Only the structure changes." },
+      { question: `Write a two-step equation with solution x = ${base.solutions[2]} using the form (x + c)/2 = ?.`, answer: base.writeItems[2].answer, change: "Only the layout changes." }
+    ];
+  } else if (variant.id === "error-spotting") {
+    sequence = [
+      { question: `A pupil solves ${base.solveItems[0].question} by subtracting ${base.solveItems[0].constant} first. Is that correct?`, answer: "No.", change: "Model undoing operations in reverse order." },
+      { question: `Correct ${base.errorItems[0].question}`, answer: base.errorItems[0].answer, change: "Only the task changes to correction." },
+      { question: `Why must the final division happen after the additive step has been undone in ${base.solveItems[1].question}?`, answer: `Because the variable is still tied inside the two-step structure until the constant is removed first.`, change: "Only the focus shifts to method." }
+    ];
+  } else {
+    sequence = [
+      { question: `Solve ${base.solveItems[0].question}`, answer: base.solveItems[0].answer, change: "Model undoing the addition or subtraction first." },
+      { question: `Solve ${base.solveItems[1].question}`, answer: base.solveItems[1].answer, change: "Only the coefficient changes." },
+      { question: `Solve ${base.solveItems[2].question}`, answer: base.solveItems[2].answer, change: "Only the layout changes." }
+    ];
+  }
+
+  return createTeachingSequence(topic, variant, sequence);
+}
+
+function generateTwoStepEquations(_topic, variant, settings, difficultyKey) {
+  const base = getTwoStepEquationBase(settings, difficultyKey);
+  if (variant.id === "which-equation") return { questions: base.whichQuestions.map((item, index) => ({ question: item.question, answer: item.answer, change: twoStepEquationChange(index) })) };
+  if (variant.id === "write-the-equation") return { questions: base.writeItems.map((item, index) => ({ question: item.question, answer: item.answer, change: twoStepEquationChange(index) })) };
+  if (variant.id === "error-spotting") return { questions: base.errorItems.map((item, index) => ({ question: item.question, answer: item.answer, change: twoStepEquationChange(index) })) };
+  return { questions: base.solveItems.map((item, index) => ({ question: item.question, answer: item.answer, change: twoStepEquationChange(index) })) };
+}
+
+function getTwoStepEquationBase(_settings, difficultyKey) {
+  const coeffs = difficultyKey === "easy" ? [2, 3] : difficultyKey === "hard" ? [3, 4, 5] : [2, 3, 4];
+  const solutions = Array.from({ length: 10 }, (_, index) => 2 + index);
+  const solveItems = solutions.map((solution, index) => {
+    const coeff = coeffs[index % coeffs.length];
+    const constant = 3 + (index % 5);
+    if (index % 3 === 0) return { question: `${coeff}x + ${constant} = ${coeff * solution + constant}`, answer: `x = ${solution}`, constant };
+    if (index % 3 === 1) return { question: `${coeff}x - ${constant} = ${coeff * solution - constant}`, answer: `x = ${solution}`, constant };
+    return { question: `(x + ${constant}) / ${coeff} = ${(solution + constant) / coeff}`, answer: `x = ${solution}`, constant };
+  });
+  const whichItems = solutions.slice(0, 10).map((solution, index) => {
+    const coeff = coeffs[index % coeffs.length];
+    const constant = 2 + (index % 4);
+    return {
+      correct: `${coeff}x + ${constant} = ${coeff * solution + constant}`,
+      wrong: `${coeff}x + ${constant} = ${coeff * solution + constant + 1}`,
+      solution
+    };
+  });
+  const whichQuestions = whichItems.map((item) => ({ question: `Which equation has solution x = ${item.solution}? A) ${item.correct} B) ${item.wrong}`, answer: "A" }));
+  const writeItems = solutions.slice(0, 10).map((solution, index) => {
+    const coeff = coeffs[index % coeffs.length];
+    const constant = 2 + (index % 5);
+    const templates = [
+      { question: `Write a two-step equation with solution x = ${solution} using the form ${coeff}x + ${constant} = ?`, answer: `${coeff}x + ${constant} = ${coeff * solution + constant}` },
+      { question: `Write a two-step equation with solution x = ${solution} using the form ${coeff}x - ${constant} = ?`, answer: `${coeff}x - ${constant} = ${coeff * solution - constant}` },
+      { question: `Write a two-step equation with solution x = ${solution} using the form (x + ${constant}) / ${coeff} = ?`, answer: `(x + ${constant}) / ${coeff} = ${trimTrailingZero((solution + constant) / coeff)}` }
+    ];
+    return templates[index % templates.length];
+  });
+  const errorItems = solveItems.map((item) => ({
+    question: `A pupil says the solution to ${item.question} is x = ${extractNumericAnswer(item.answer) + 1}. Correct the answer.`,
+    answer: item.answer
+  }));
+  return { solveItems, whichItems, whichQuestions, writeItems, errorItems, solutions };
+}
+
+function generateStraightLineGraphsIntroTeaching(topic, variant, settings, difficultyKey) {
+  const base = getStraightLineGraphBase(settings, difficultyKey);
+  let sequence;
+
+  if (variant.id === "read-gradient") {
+    sequence = [
+      { question: `The line passes through ${coordinateLabel(base.lines[0].points[0])} and ${coordinateLabel(base.lines[0].points[1])}. What is the gradient?`, answer: `${base.lines[0].m}`, change: "Model rise over run from two points." },
+      { question: `The line passes through ${coordinateLabel(base.lines[1].points[0])} and ${coordinateLabel(base.lines[1].points[1])}. What is the gradient?`, answer: `${base.lines[1].m}`, change: "Only the steepness changes." },
+      { question: `Which line is steeper: y = ${base.lines[0].m}x + ${base.lines[0].c} or y = ${base.lines[2].m}x + ${base.lines[2].c}?`, answer: `y = ${base.lines[2].m}x + ${base.lines[2].c}`, change: "Only the comparison changes." }
+    ];
+  } else if (variant.id === "match-equation") {
+    sequence = [
+      { question: `Which equation matches points ${coordinateLabel(base.lines[0].points[0])}, ${coordinateLabel(base.lines[0].points[1])}, ${coordinateLabel(base.lines[0].points[2])}?`, answer: base.lines[0].equation, change: "Model linking a point pattern to an equation." },
+      { question: `Which equation matches points ${coordinateLabel(base.lines[1].points[0])}, ${coordinateLabel(base.lines[1].points[1])}, ${coordinateLabel(base.lines[1].points[2])}?`, answer: base.lines[1].equation, change: "Only the intercept changes." },
+      { question: `Which equation matches points ${coordinateLabel(base.lines[2].points[0])}, ${coordinateLabel(base.lines[2].points[1])}, ${coordinateLabel(base.lines[2].points[2])}?`, answer: base.lines[2].equation, change: "Only the gradient changes." }
+    ];
+  } else if (variant.id === "missing-point") {
+    sequence = [
+      { question: `On the line y = ${base.lines[0].m}x + ${base.lines[0].c}, find y when x = ${base.lines[0].xValues[3]}.`, answer: `${base.lines[0].points[3].y}`, change: "Model substituting into the rule." },
+      { question: `On the line y = ${base.lines[1].m}x + ${base.lines[1].c}, find y when x = ${base.lines[1].xValues[3]}.`, answer: `${base.lines[1].points[3].y}`, change: "Only the rule changes." },
+      { question: `A point on y = ${base.lines[2].m}x + ${base.lines[2].c} has x = ${base.lines[2].xValues[3]}. Find y.`, answer: `${base.lines[2].points[3].y}`, change: "Only the wording changes." }
+    ];
+  } else {
+    sequence = [
+      { question: `For y = ${base.lines[0].m}x + ${base.lines[0].c}, find y when x = ${base.lines[0].xValues[0]}.`, answer: `${base.lines[0].points[0].y}`, change: "Model substituting into a linear rule." },
+      { question: `For y = ${base.lines[0].m}x + ${base.lines[0].c}, find y when x = ${base.lines[0].xValues[1]}.`, answer: `${base.lines[0].points[1].y}`, change: "Only x changes." },
+      { question: `For y = ${base.lines[1].m}x + ${base.lines[1].c}, find y when x = ${base.lines[1].xValues[1]}.`, answer: `${base.lines[1].points[1].y}`, change: "Only the equation changes." }
+    ];
+  }
+  return createTeachingSequence(topic, variant, sequence);
+}
+
+function generateStraightLineGraphsIntro(_topic, variant, settings, difficultyKey) {
+  const base = getStraightLineGraphBase(settings, difficultyKey);
+  if (variant.id === "read-gradient") return { questions: base.gradientItems.map((item, index) => ({ question: item.question, answer: item.answer, change: straightLineGraphChange(index), diagram: item.diagram })) };
+  if (variant.id === "match-equation") return { questions: base.matchItems.map((item, index) => ({ question: item.question, answer: item.answer, change: straightLineGraphChange(index), diagram: item.diagram })) };
+  if (variant.id === "missing-point") return { questions: base.missingItems.map((item, index) => ({ question: item.question, answer: item.answer, change: straightLineGraphChange(index), diagram: item.diagram })) };
+  return { questions: base.plotItems.map((item, index) => ({ question: item.question, answer: item.answer, change: straightLineGraphChange(index), diagram: item.diagram })) };
+}
+
+function getStraightLineGraphBase(_settings, difficultyKey) {
+  const lines = Array.from({ length: 10 }, (_, index) => {
+    const m = difficultyKey === "easy" ? 1 + (index % 2) : difficultyKey === "hard" ? 2 + (index % 3) : 1 + (index % 3);
+    const c = difficultyKey === "easy" ? index % 3 : (index % 5) - 1;
+    const xValues = [0, 1, 2, 3];
+    const points = xValues.map((x) => ({ x, y: m * x + c }));
+    return { m, c, xValues, points, equation: `y = ${m}x ${c < 0 ? "-" : "+"} ${Math.abs(c)}` };
+  });
+  const plotItems = lines.map((line, index) => ({
+    question: `For ${line.equation}, what is y when x = ${line.xValues[index % 4]}?`,
+    answer: `${line.points[index % 4].y}`,
+    diagram: coordinateGridDiagram(line.points.slice(0, 3))
+  }));
+  const gradientItems = lines.map((line) => ({
+    question: `The line passes through ${coordinateLabel(line.points[0])} and ${coordinateLabel(line.points[1])}. What is the gradient?`,
+    answer: `${line.m}`,
+    diagram: coordinateGridDiagram(line.points.slice(0, 3))
+  }));
+  const matchItems = lines.map((line, index) => ({
+    question: `Which equation matches the plotted points?`,
+    answer: line.equation,
+    diagram: coordinateGridDiagram(line.points.slice(0, 3).map((point) => ({ ...point, label: String.fromCharCode(65 + index % 3) })))
+  }));
+  const missingItems = lines.map((line) => ({
+    question: `A point on ${line.equation} has x = ${line.xValues[3]}. Find y.`,
+    answer: `${line.points[3].y}`,
+    diagram: coordinateGridDiagram(line.points.slice(0, 3))
+  }));
+  return { lines, plotItems, gradientItems, matchItems, missingItems };
+}
+
+function generatePythagorasTeaching(topic, variant, settings, difficultyKey) {
+  const base = getPythagorasBase(settings, difficultyKey);
+  let sequence;
+  if (variant.id === "which-side") {
+    sequence = [
+      { question: `In a right-angled triangle with sides ${base.triples[0].a}, ${base.triples[0].b}, ${base.triples[0].c}, which side is the hypotenuse?`, answer: `${base.triples[0].c}`, change: "Model identifying the longest side opposite the right angle." },
+      { question: `Could side lengths ${base.triples[1].a}, ${base.triples[1].b}, ${base.triples[1].c} form a right-angled triangle?`, answer: "Yes.", change: "Only the task changes to checking." },
+      { question: `Which is longer in a right-angled triangle with shorter sides ${base.triples[2].a} and ${base.triples[2].b}: the hypotenuse or ${base.triples[2].b}?`, answer: "The hypotenuse.", change: "Only the reasoning focus changes." }
+    ];
+  } else if (variant.id === "compare-triangles") {
+    sequence = [
+      { question: `Compare the hypotenuse of triangles with shorter sides ${base.triples[0].a}, ${base.triples[0].b} and ${base.triples[1].a}, ${base.triples[1].b}. Which is larger?`, answer: `${base.triples[1].c}`, change: "Model comparing by the theorem." },
+      { question: `Which triangle has the greater hypotenuse: ${base.triples[2].a}, ${base.triples[2].b} or ${base.triples[3].a}, ${base.triples[3].b}?`, answer: `${Math.max(base.triples[2].c, base.triples[3].c)}`, change: "Only the side pair changes." },
+      { question: `Why does increasing one shorter side increase the hypotenuse?`, answer: `Because the square of the hypotenuse equals the sum of the squares of the shorter sides.`, change: "Only the task changes to verbal reasoning." }
+    ];
+  } else if (variant.id === "error-spotting") {
+    sequence = [
+      { question: `A pupil says the missing side in a right-angled triangle with shorter sides 3 and 4 is 7. Is that correct?`, answer: "No.", change: "Model rejecting simple addition." },
+      { question: `Correct the triangle with shorter sides 5 and 12 if the pupil says the hypotenuse is 16.`, answer: "13", change: "Only the triple changes." },
+      { question: `Why do you square the side lengths before adding or subtracting in Pythagoras?`, answer: `Because the theorem links the areas of the squares on the sides, not the side lengths directly.`, change: "Only the focus changes to the theorem meaning." }
+    ];
+  } else {
+    sequence = [
+      { question: `Find the hypotenuse of a right-angled triangle with shorter sides ${base.triples[0].a} and ${base.triples[0].b}.`, answer: `${base.triples[0].c}`, change: "Model substituting into a known triple." },
+      { question: `Find the hypotenuse of a right-angled triangle with shorter sides ${base.triples[1].a} and ${base.triples[1].b}.`, answer: `${base.triples[1].c}`, change: "Only the triple changes." },
+      { question: `Find the missing shorter side if the hypotenuse is ${base.triples[2].c} and the other shorter side is ${base.triples[2].b}.`, answer: `${base.triples[2].a}`, change: "Only the unknown side changes." }
+    ];
+  }
+  return createTeachingSequence(topic, variant, sequence);
+}
+
+function generatePythagoras(_topic, variant, settings, difficultyKey) {
+  const base = getPythagorasBase(settings, difficultyKey);
+  if (variant.id === "which-side") return { questions: base.whichItems.map((item, index) => ({ question: item.question, answer: item.answer, change: pythagorasChange(index) })) };
+  if (variant.id === "compare-triangles") return { questions: base.compareItems.map((item, index) => ({ question: item.question, answer: item.answer, change: pythagorasChange(index) })) };
+  if (variant.id === "error-spotting") return { questions: base.errorItems.map((item, index) => ({ question: item.question, answer: item.answer, change: pythagorasChange(index) })) };
+  return { questions: base.findItems.map((item, index) => ({ question: item.question, answer: item.answer, change: pythagorasChange(index) })) };
+}
+
+function getPythagorasBase(_settings, difficultyKey) {
+  const triples = difficultyKey === "hard"
+    ? [{ a: 5, b: 12, c: 13 }, { a: 8, b: 15, c: 17 }, { a: 7, b: 24, c: 25 }, { a: 9, b: 12, c: 15 }, { a: 12, b: 16, c: 20 }, { a: 20, b: 21, c: 29 }, { a: 10, b: 24, c: 26 }, { a: 15, b: 36, c: 39 }, { a: 18, b: 24, c: 30 }, { a: 16, b: 30, c: 34 }]
+    : [{ a: 3, b: 4, c: 5 }, { a: 5, b: 12, c: 13 }, { a: 6, b: 8, c: 10 }, { a: 8, b: 15, c: 17 }, { a: 7, b: 24, c: 25 }, { a: 9, b: 12, c: 15 }, { a: 10, b: 24, c: 26 }, { a: 12, b: 16, c: 20 }, { a: 15, b: 20, c: 25 }, { a: 18, b: 24, c: 30 }];
+  const findItems = triples.map((item, index) => index % 2 === 0
+    ? { question: `Find the hypotenuse of a right-angled triangle with shorter sides ${item.a} and ${item.b}.`, answer: `${item.c}` }
+    : { question: `Find the missing shorter side if the hypotenuse is ${item.c} and the other shorter side is ${item.b}.`, answer: `${item.a}` });
+  const whichItems = triples.map((item, index) => index % 2 === 0
+    ? { question: `In a right-angled triangle with side lengths ${item.a}, ${item.b}, ${item.c}, which side is the hypotenuse?`, answer: `${item.c}` }
+    : { question: `Do ${item.a}, ${item.b}, ${item.c} satisfy Pythagoras' theorem?`, answer: "Yes" });
+  const compareItems = triples.map((item, index) => {
+    const other = triples[(index + 1) % triples.length];
+    return { question: `Which triangle has the greater hypotenuse: one with shorter sides ${item.a}, ${item.b} or one with shorter sides ${other.a}, ${other.b}?`, answer: item.c > other.c ? `${item.c}` : `${other.c}` };
+  });
+  const errorItems = triples.map((item) => ({ question: `A pupil says the hypotenuse for shorter sides ${item.a} and ${item.b} is ${item.a + item.b}. Correct the answer.`, answer: `${item.c}` }));
+  return { triples, findItems, whichItems, compareItems, errorItems };
+}
+
+function generateCompoundMeasuresTeaching(topic, variant, settings, difficultyKey) {
+  const base = getCompoundMeasuresBase(settings, difficultyKey);
+  let sequence;
+  if (variant.id === "rearrange-the-formula") {
+    sequence = [
+      { question: `If speed = distance / time, which operation finds distance from speed and time?`, answer: "Multiply.", change: "Model rearranging the relationship conceptually." },
+      { question: `If density = mass / volume, which operation finds mass from density and volume?`, answer: "Multiply.", change: "Only the context changes." },
+      { question: `If pressure = force / area, which operation finds area from force and pressure?`, answer: "Divide.", change: "Only the unknown changes." }
+    ];
+  } else if (variant.id === "missing-value") {
+    sequence = [
+      { question: `${base.missings[0].question}`, answer: base.missings[0].answer, change: "Model identifying the unknown measure." },
+      { question: `${base.missings[1].question}`, answer: base.missings[1].answer, change: "Only the formula family changes." },
+      { question: `${base.missings[2].question}`, answer: base.missings[2].answer, change: "Only the missing quantity changes." }
+    ];
+  } else if (variant.id === "compare-rates") {
+    sequence = [
+      { question: `${base.compares[0].question}`, answer: base.compares[0].answer, change: "Model comparing rates, not just raw values." },
+      { question: `${base.compares[1].question}`, answer: base.compares[1].answer, change: "Only the context changes." },
+      { question: `${base.compares[2].question}`, answer: base.compares[2].answer, change: "Only the numbers change." }
+    ];
+  } else {
+    sequence = [
+      { question: `${base.directs[0].question}`, answer: base.directs[0].answer, change: "Model one direct compound measure calculation." },
+      { question: `${base.directs[1].question}`, answer: base.directs[1].answer, change: "Only the measure type changes." },
+      { question: `${base.directs[2].question}`, answer: base.directs[2].answer, change: "Only the numbers change." }
+    ];
+  }
+  return createTeachingSequence(topic, variant, sequence);
+}
+
+function generateCompoundMeasures(_topic, variant, settings, difficultyKey) {
+  const base = getCompoundMeasuresBase(settings, difficultyKey);
+  if (variant.id === "rearrange-the-formula") return { questions: base.rearranges.map((item, index) => ({ question: item.question, answer: item.answer, change: compoundMeasureChange(index) })) };
+  if (variant.id === "missing-value") return { questions: base.missings.map((item, index) => ({ question: item.question, answer: item.answer, change: compoundMeasureChange(index) })) };
+  if (variant.id === "compare-rates") return { questions: base.compares.map((item, index) => ({ question: item.question, answer: item.answer, change: compoundMeasureChange(index) })) };
+  return { questions: base.directs.map((item, index) => ({ question: item.question, answer: item.answer, change: compoundMeasureChange(index) })) };
+}
+
+function getCompoundMeasuresBase(_settings, difficultyKey) {
+  const speedData = [
+    { distance: 120, time: 2 }, { distance: 180, time: 3 }, { distance: 250, time: 5 }, { distance: 360, time: 6 },
+    { distance: 420, time: 7 }, { distance: 540, time: 9 }, { distance: 640, time: 8 }, { distance: 720, time: 12 },
+    { distance: 810, time: 9 }, { distance: 960, time: 12 }
+  ];
+  const densityData = [
+    { mass: 24, volume: 6 }, { mass: 30, volume: 5 }, { mass: 42, volume: 7 }, { mass: 54, volume: 9 },
+    { mass: 48, volume: 6 }, { mass: 63, volume: 9 }, { mass: 80, volume: 10 }, { mass: 99, volume: 11 },
+    { mass: 108, volume: 12 }, { mass: 70, volume: 7 }
+  ];
+  const pressureData = difficultyKey === "hard"
+    ? [{ force: 240, area: 12 }, { force: 360, area: 15 }, { force: 540, area: 18 }, { force: 700, area: 20 }, { force: 840, area: 24 }, { force: 960, area: 30 }, { force: 1240, area: 31 }, { force: 1560, area: 39 }, { force: 1820, area: 35 }, { force: 2100, area: 42 }]
+    : [{ force: 120, area: 6 }, { force: 180, area: 9 }, { force: 250, area: 10 }, { force: 320, area: 16 }, { force: 360, area: 12 }, { force: 420, area: 14 }, { force: 480, area: 16 }, { force: 560, area: 20 }, { force: 630, area: 21 }, { force: 720, area: 24 }];
+  const directs = Array.from({ length: 10 }, (_, index) => {
+    const type = index % 3;
+    if (type === 0) {
+      const item = speedData[index];
+      return { question: `Find the speed for ${item.distance} km in ${item.time} hours.`, answer: `${trimTrailingZero(item.distance / item.time)} km/h` };
+    }
+    if (type === 1) {
+      const item = densityData[index];
+      return { question: `Find the density if mass = ${item.mass} g and volume = ${item.volume} cm^3.`, answer: `${trimTrailingZero(item.mass / item.volume)} g/cm^3` };
+    }
+    const item = pressureData[index];
+    return { question: `Find the pressure if force = ${item.force} N and area = ${item.area} cm^2.`, answer: `${trimTrailingZero(item.force / item.area)} N/cm^2` };
+  });
+  const rearranges = [
+    { question: `If speed = distance / time, how do you find distance from speed and time?`, answer: "distance = speed x time" },
+    { question: `If density = mass / volume, how do you find mass from density and volume?`, answer: "mass = density x volume" },
+    { question: `If pressure = force / area, how do you find area from force and pressure?`, answer: "area = force / pressure" },
+    { question: `If speed = distance / time, how do you find time from distance and speed?`, answer: "time = distance / speed" },
+    { question: `If density = mass / volume, how do you find volume from mass and density?`, answer: "volume = mass / density" },
+    { question: `If pressure = force / area, how do you find force from pressure and area?`, answer: "force = pressure x area" },
+    { question: `Which operation undoes division by time when using speed = distance / time?`, answer: "Multiply by time." },
+    { question: `Which operation undoes division by volume when using density = mass / volume?`, answer: "Multiply by volume." },
+    { question: `Which operation undoes division by area when using pressure = force / area to find force?`, answer: "Multiply by area." },
+    { question: `Which operation is needed to find area from force and pressure?`, answer: "Divide force by pressure." }
+  ];
+  const missings = Array.from({ length: 10 }, (_, index) => {
+    const item = speedData[index];
+    return index % 2 === 0
+      ? { question: `A car travels at ${trimTrailingZero(item.distance / item.time)} km/h for ${item.time} hours. How far does it travel?`, answer: `${item.distance} km` }
+      : { question: `${item.distance} km is travelled at ${trimTrailingZero(item.distance / item.time)} km/h. How long does the journey take?`, answer: `${item.time} hours` };
+  });
+  const compares = Array.from({ length: 10 }, (_, index) => {
+    const left = speedData[index];
+    const right = speedData[(index + 1) % speedData.length];
+    const leftRate = left.distance / left.time;
+    const rightRate = right.distance / right.time;
+    return {
+      question: `Which journey is faster: ${left.distance} km in ${left.time} hours or ${right.distance} km in ${right.time} hours?`,
+      answer: leftRate > rightRate ? `${left.distance} km in ${left.time} hours` : `${right.distance} km in ${right.time} hours`
+    };
+  });
+  return { directs, rearranges, missings, compares };
+}
+
+function generateSimultaneousEquationsIntroTeaching(topic, variant, settings, difficultyKey) {
+  const base = getSimultaneousEquationBase(settings, difficultyKey);
+  let sequence;
+  if (variant.id === "which-pair") {
+    sequence = [
+      { question: `Which pair has solution x = ${base.pairs[0].x}, y = ${base.pairs[0].y}? A) ${base.whichItems[0].correctA} and ${base.whichItems[0].correctB} B) ${base.whichItems[0].wrongA} and ${base.whichItems[0].wrongB}`, answer: "A", change: "Model checking by substitution into both equations." },
+      { question: `Which pair has solution x = ${base.pairs[1].x}, y = ${base.pairs[1].y}? A) ${base.whichItems[1].correctA} and ${base.whichItems[1].correctB} B) ${base.whichItems[1].wrongA} and ${base.whichItems[1].wrongB}`, answer: "A", change: "Only the pair changes." },
+      { question: `Which pair has solution x = ${base.pairs[2].x}, y = ${base.pairs[2].y}? A) ${base.whichItems[2].correctA} and ${base.whichItems[2].correctB} B) ${base.whichItems[2].wrongA} and ${base.whichItems[2].wrongB}`, answer: "A", change: "Only the coefficients change." }
+    ];
+  } else if (variant.id === "write-the-pair") {
+    sequence = [
+      { question: `Write two equations with solution x = ${base.pairs[0].x}, y = ${base.pairs[0].y}.`, answer: `${base.writeItems[0].a}; ${base.writeItems[0].b}`, change: "Model building a consistent pair from a known solution." },
+      { question: `Write two equations with solution x = ${base.pairs[1].x}, y = ${base.pairs[1].y}.`, answer: `${base.writeItems[1].a}; ${base.writeItems[1].b}`, change: "Only the solution pair changes." },
+      { question: `Write two equations with solution x = ${base.pairs[2].x}, y = ${base.pairs[2].y}.`, answer: `${base.writeItems[2].a}; ${base.writeItems[2].b}`, change: "Only the coefficients change." }
+    ];
+  } else if (variant.id === "error-spotting") {
+    sequence = [
+      { question: `A pupil says the solution to ${base.solveItems[0].a} and ${base.solveItems[0].b} is x = ${base.pairs[0].x + 1}, y = ${base.pairs[0].y}. Is that correct?`, answer: "No.", change: "Model checking in both equations." },
+      { question: `Correct the solution to ${base.solveItems[1].a} and ${base.solveItems[1].b}.`, answer: `x = ${base.pairs[1].x}, y = ${base.pairs[1].y}`, change: "Only the pair changes." },
+      { question: `Why must a simultaneous-equation solution satisfy both equations, not just one?`, answer: `Because the pair represents one point or value pair that works in both relationships at the same time.`, change: "Only the focus changes to the meaning." }
+    ];
+  } else {
+    sequence = [
+      { question: `Solve ${base.solveItems[0].a} and ${base.solveItems[0].b}.`, answer: `x = ${base.pairs[0].x}, y = ${base.pairs[0].y}`, change: "Model a simple elimination or substitution pair." },
+      { question: `Solve ${base.solveItems[1].a} and ${base.solveItems[1].b}.`, answer: `x = ${base.pairs[1].x}, y = ${base.pairs[1].y}`, change: "Only the coefficients change." },
+      { question: `Solve ${base.solveItems[2].a} and ${base.solveItems[2].b}.`, answer: `x = ${base.pairs[2].x}, y = ${base.pairs[2].y}`, change: "Only the signs change." }
+    ];
+  }
+  return createTeachingSequence(topic, variant, sequence);
+}
+
+function generateSimultaneousEquationsIntro(_topic, variant, settings, difficultyKey) {
+  const base = getSimultaneousEquationBase(settings, difficultyKey);
+  if (variant.id === "which-pair") return { questions: base.whichQuestions.map((item, index) => ({ question: item.question, answer: item.answer, change: simultaneousEquationChange(index) })) };
+  if (variant.id === "write-the-pair") return { questions: base.writeQuestions.map((item, index) => ({ question: item.question, answer: item.answer, change: simultaneousEquationChange(index) })) };
+  if (variant.id === "error-spotting") return { questions: base.errorQuestions.map((item, index) => ({ question: item.question, answer: item.answer, change: simultaneousEquationChange(index) })) };
+  return { questions: base.solveQuestions.map((item, index) => ({ question: item.question, answer: item.answer, change: simultaneousEquationChange(index) })) };
+}
+
+function getSimultaneousEquationBase(_settings, difficultyKey) {
+  const pairs = Array.from({ length: 10 }, (_, index) => {
+    const x = 1 + (index % 5);
+    const y = 2 + (index % 4);
+    const a1 = 1 + (index % 3);
+    const b1 = 1 + ((index + 1) % 3);
+    const a2 = 1 + ((index + 2) % 3);
+    const b2 = difficultyKey === "easy" ? 1 + (index % 2) : 1 + ((index + 1) % 3);
+    return {
+      x, y,
+      eq1: `${a1}x + ${b1}y = ${a1 * x + b1 * y}`,
+      eq2: `${a2}x ${index % 2 === 0 ? "-" : "+"} ${b2}y = ${a2 * x + (index % 2 === 0 ? -b2 * y : b2 * y)}`
+    };
+  });
+  const solveItems = pairs.map((item) => ({ a: item.eq1, b: item.eq2 }));
+  const solveQuestions = solveItems.map((item, index) => ({ question: `Solve ${item.a} and ${item.b}.`, answer: `x = ${pairs[index].x}, y = ${pairs[index].y}` }));
+  const whichItems = pairs.map((item) => ({
+    correctA: item.eq1,
+    correctB: item.eq2,
+    wrongA: item.eq1,
+    wrongB: `${item.eq2.split("=")[0]}= ${Number(item.eq2.split("=")[1]) + 1}`
+  }));
+  const whichQuestions = pairs.map((item, index) => ({ question: `Which pair has solution x = ${item.x}, y = ${item.y}? A) ${whichItems[index].correctA} and ${whichItems[index].correctB} B) ${whichItems[index].wrongA} and ${whichItems[index].wrongB}`, answer: "A" }));
+  const writeItems = pairs.map((item) => ({ a: item.eq1, b: item.eq2 }));
+  const writeQuestions = pairs.map((item, index) => ({ question: `Write a pair of simultaneous equations with solution x = ${item.x}, y = ${item.y}.`, answer: `${writeItems[index].a}; ${writeItems[index].b}` }));
+  const errorQuestions = pairs.map((item) => ({ question: `A pupil says the solution to ${item.eq1} and ${item.eq2} is x = ${item.x + 1}, y = ${item.y}. Correct the solution.`, answer: `x = ${item.x}, y = ${item.y}` }));
+  return { pairs, solveItems, solveQuestions, whichItems, whichQuestions, writeItems, writeQuestions, errorQuestions };
+}
+
+function percentageAmountChange(index) { return ["Only the percentage changes.", "Only the amount changes.", "Only the method changes.", "Only the missing part changes."][index % 4]; }
+function standardFormChange(index) { return ["Only the coefficient changes.", "Only the exponent changes.", "Only the conversion direction changes.", "Only the comparison target changes."][index % 4]; }
+function indicesChange(index) { return ["Only the base changes.", "Only the exponent changes.", "Only the operation changes.", "Only the missing part changes."][index % 4]; }
+function twoStepEquationChange(index) { return ["Only the constant changes.", "Only the coefficient changes.", "Only the sign changes.", "Only the layout changes."][index % 4]; }
+function straightLineGraphChange(index) { return ["Only the x-value changes.", "Only the gradient changes.", "Only the intercept changes.", "Only the representation changes."][index % 4]; }
+function pythagorasChange(index) { return ["Only the side lengths change.", "Only the unknown side changes.", "Only the triangle comparison changes.", "Only the reasoning focus changes."][index % 4]; }
+function compoundMeasureChange(index) { return ["Only the measure type changes.", "Only the missing quantity changes.", "Only the units change.", "Only the comparison changes."][index % 4]; }
+function simultaneousEquationChange(index) { return ["Only the coefficients change.", "Only the sign changes.", "Only the solution pair changes.", "Only the checking focus changes."][index % 4]; }
+
+function extractNumericAnswer(answerText) {
+  const match = String(answerText).match(/-?\d+(\.\d+)?/);
+  return match ? Number(match[0]) : 0;
+}
+
+function generatePercentageAmountReasoning(_topic, variant, _settings, _difficultyKey, _worksheet) {
+  if (variant?.id === "compare-methods") {
+    return [
+      { question: `Why is 10% often a useful starting point when finding other percentages of an amount?`, answer: `Because many percentages can be built from 10%, such as 20%, 30%, 5%, or 15%.`, change: "Reasoning" },
+      { question: `A pupil uses the same method for 25% and 20%. Explain why those percentages suggest different efficient routes.`, answer: `25% is naturally linked to quarters, while 20% is linked to fifths or 10% doubled.`, change: "Reasoning" },
+      { question: `Explain how you would decide whether to use halving, quartering, or building from 10% in a percentage question.`, answer: `Choose the method that matches the percentage structure most directly.`, change: "Reasoning" }
+    ];
+  }
+  if (variant?.id === "missing-value") {
+    return [
+      { question: `Why does knowing 10% or 25% of an amount help you work back to the whole?`, answer: `Because those percentages represent known fractions of the whole that can be scaled back up.`, change: "Reasoning" },
+      { question: `A pupil says if 20% of a number is 14, the whole is 24. Explain the error.`, answer: `20% is one fifth, so the whole must be five times 14, not 10 more.`, change: "Reasoning" },
+      { question: `Explain the difference between finding a percentage of an amount and rebuilding the whole from a known percentage part.`, answer: `One scales down from the whole; the other scales up from a known part to the whole.`, change: "Reasoning" }
+    ];
+  }
+  if (variant?.id === "error-spotting") {
+    return [
+      { question: `What is the most common place-value mistake when finding 10% of an amount?`, answer: `Treating 10% as the whole amount instead of one tenth of it.`, change: "Reasoning" },
+      { question: `Why can a wrong percentage answer still look plausible at first glance?`, answer: `Because it may still be a reasonable-looking number unless checked against the size of the whole and the percentage.`, change: "Reasoning" },
+      { question: `How can benchmark percentages help you quickly reject an incorrect answer?`, answer: `They let you estimate whether the answer should be bigger or smaller than familiar fractions of the whole.`, change: "Reasoning" }
+    ];
+  }
+  return [
+    { question: `Why is finding 50% of an amount often easier than finding 35% directly?`, answer: `Because 50% is just half, while 35% usually needs to be built from easier benchmark percentages.`, change: "Reasoning" },
+    { question: `A pupil says 75% of an amount must be larger than the whole. Explain why that is wrong.`, answer: `75% is less than 100%, so it must be less than the whole amount.`, change: "Reasoning" },
+    { question: `Describe one efficient method for finding 15% of an amount.`, answer: `Find 10% and 5% and add them.`, change: "Reasoning" }
+  ];
+}
+
+function generateStandardFormReasoning(_topic, variant, _settings, _difficultyKey, _worksheet) {
+  if (variant?.id === "compare-values") {
+    return [
+      { question: `When comparing two numbers in standard form, why is the power of ten often the first thing to check?`, answer: `Because it shows the size of the number before you compare coefficients.`, change: "Reasoning" },
+      { question: `If two numbers have the same power of ten, what decides which is greater?`, answer: `The coefficient.`, change: "Reasoning" },
+      { question: `Why can a larger-looking coefficient still represent a smaller number in standard form?`, answer: `Because a smaller exponent can make the overall number smaller.`, change: "Reasoning" }
+    ];
+  }
+  if (variant?.id === "error-spotting") {
+    return [
+      { question: `Why is 43 x 10^4 not written in standard form even if it has the correct value?`, answer: `Because the coefficient must be at least 1 but less than 10.`, change: "Reasoning" },
+      { question: `What does the exponent tell you in a standard form number?`, answer: `How many places the decimal point has shifted, or the power of ten multiplying the coefficient.`, change: "Reasoning" },
+      { question: `How can you check quickly whether a standard form answer is sensible?`, answer: `Estimate the size of the original number and check the coefficient and exponent match that size.`, change: "Reasoning" }
+    ];
+  }
+  return [
+    { question: `Why must the coefficient in standard form be between 1 and 10?`, answer: `So each number has one consistent standard form representation.`, change: "Reasoning" },
+    { question: `What changes when you move from a large ordinary number to its standard form?`, answer: `The decimal point position and the power of ten used to compensate for that move.`, change: "Reasoning" },
+    { question: `Why are very large and very small numbers often written in standard form?`, answer: `Because it makes them easier to read, compare, and calculate with.`, change: "Reasoning" }
+  ];
+}
+
+function generateIndicesReasoning(_topic, variant, _settings, _difficultyKey, _worksheet) {
+  if (variant?.id === "apply-index-laws") {
+    return [
+      { question: `Why do the powers add when multiplying the same base?`, answer: `Because you are combining repeated multiplication of the same base into one longer product.`, change: "Reasoning" },
+      { question: `Why do the powers subtract when dividing the same base?`, answer: `Because matching factors cancel, leaving only the difference in repeated factors.`, change: "Reasoning" },
+      { question: `Why is it important that the base is the same before using a simple index law?`, answer: `Because the laws describe repeated multiplication of the same number or variable.`, change: "Reasoning" }
+    ];
+  }
+  if (variant?.id === "missing-value") {
+    return [
+      { question: `How can a missing exponent question show whether you really understand an index law?`, answer: `Because you must reason about the relationship between the powers, not just calculate a final value.`, change: "Reasoning" },
+      { question: `Why is 2^3 not the same as 3^2 even though both use 2 and 3?`, answer: `The base and exponent have different roles, so swapping them changes the value.`, change: "Reasoning" },
+      { question: `What is the difference between 3 x 3 x 3 and 3^3 in meaning?`, answer: `They mean the same value, but the index form is a shorter notation for repeated multiplication.`, change: "Reasoning" }
+    ];
+  }
+  return [
+    { question: `Why is index notation useful compared with writing out repeated multiplication each time?`, answer: `It is shorter, clearer, and makes patterns in powers easier to see.`, change: "Reasoning" },
+    { question: `A pupil says 4^2 means 4 x 2. Explain why that is incorrect.`, answer: `It means 4 multiplied by itself twice, so 4 x 4.`, change: "Reasoning" },
+    { question: `How can you tell from index notation whether the value is likely to be large or small?`, answer: `Look at the base and exponent together because repeated multiplication grows quickly as either increases.`, change: "Reasoning" }
+  ];
+}
+
+function generateTwoStepEquationReasoning(_topic, variant, _settings, _difficultyKey, _worksheet) {
+  if (variant?.id === "which-equation") {
+    return [
+      { question: `Why is substitution a useful check when deciding which equation has a given solution?`, answer: `Because you can test the proposed value directly in each equation.`, change: "Reasoning" },
+      { question: `Why can two equations that look similar have different solutions?`, answer: `A small change to a coefficient, constant, or sign changes the balance of the equation.`, change: "Reasoning" },
+      { question: `What should you check first when a value is claimed to solve a two-step equation?`, answer: `Check whether both sides are equal after substituting the value.`, change: "Reasoning" }
+    ];
+  }
+  if (variant?.id === "write-the-equation") {
+    return [
+      { question: `Why does writing an equation from a known solution deepen understanding?`, answer: `Because you must work backwards from the solution and preserve the equation structure.`, change: "Reasoning" },
+      { question: `How can two different two-step equations share the same solution?`, answer: `They can use different operations but still balance when the same value is substituted.`, change: "Reasoning" },
+      { question: `What is the easiest way to check whether the equation you wrote is valid?`, answer: `Substitute the stated solution and see if both sides match.`, change: "Reasoning" }
+    ];
+  }
+  if (variant?.id === "error-spotting") {
+    return [
+      { question: `Why must two-step equations be undone in reverse order?`, answer: `Because the last operation applied to the variable must be undone first.`, change: "Reasoning" },
+      { question: `A pupil divides before removing the constant. Explain why that can fail.`, answer: `The expression is still grouped by the outer structure, so the constant must be removed before isolating x.`, change: "Reasoning" },
+      { question: `How can balancing the equation help avoid common mistakes?`, answer: `It keeps both sides equal while you undo each step carefully.`, change: "Reasoning" }
+    ];
+  }
+  return [
+    { question: `What is the main difference between solving a one-step and a two-step equation?`, answer: `A two-step equation needs two inverse-operation steps rather than one.`, change: "Reasoning" },
+    { question: `Why is it useful to identify the outermost operation first in a two-step equation?`, answer: `It tells you the first step to undo.`, change: "Reasoning" },
+    { question: `How can you check a final solution quickly?`, answer: `Substitute it back into the original equation.`, change: "Reasoning" }
+  ];
+}
+
+function generateStraightLineGraphReasoning(_topic, variant, _settings, _difficultyKey, _worksheet) {
+  if (variant?.id === "read-gradient") {
+    return [
+      { question: `What does the gradient of a straight line tell you?`, answer: `How much y changes for each increase of 1 in x.`, change: "Reasoning" },
+      { question: `Why do two points on the same straight line show the same gradient throughout the line?`, answer: `Because the line changes at a constant rate.`, change: "Reasoning" },
+      { question: `How can you tell from plotted points whether a line is steeper?`, answer: `The rise per step in x is larger.`, change: "Reasoning" }
+    ];
+  }
+  if (variant?.id === "match-equation") {
+    return [
+      { question: `Why is the intercept useful when matching a line to an equation?`, answer: `It shows the y-value when x = 0, which narrows the equation quickly.`, change: "Reasoning" },
+      { question: `If two lines have the same gradient, what must you compare next to tell them apart?`, answer: `Their intercepts.`, change: "Reasoning" },
+      { question: `How can a table of values help you identify a line equation?`, answer: `It shows the constant change and where the line starts.`, change: "Reasoning" }
+    ];
+  }
+  if (variant?.id === "missing-point") {
+    return [
+      { question: `Why does a missing-point question still rely on the same linear rule?`, answer: `Because every point on the line must satisfy the same equation.`, change: "Reasoning" },
+      { question: `How can one known point and a gradient help you predict another point?`, answer: `Move one step in x and adjust y by the gradient.`, change: "Reasoning" },
+      { question: `Why is a straight-line graph easier to predict from than a non-linear graph?`, answer: `Because its change is constant.`, change: "Reasoning" }
+    ];
+  }
+  return [
+    { question: `Why is a table of values useful before plotting a straight-line graph?`, answer: `It organises x and y pairs so the linear pattern is easier to see.`, change: "Reasoning" },
+    { question: `What stays the same in the y-values of a straight line with constant gradient?`, answer: `The change between consecutive y-values for equal x-steps.`, change: "Reasoning" },
+    { question: `How can you tell from an equation whether a line rises or falls as x increases?`, answer: `A positive gradient rises; a negative gradient falls.`, change: "Reasoning" }
+  ];
+}
+
+function generatePythagorasReasoning(_topic, variant, _settings, _difficultyKey, _worksheet) {
+  if (variant?.id === "error-spotting") {
+    return [
+      { question: `Why is adding side lengths directly not enough in Pythagoras?`, answer: `Because the theorem relates the squares of the side lengths, not the lengths themselves.`, change: "Reasoning" },
+      { question: `Why must you identify the hypotenuse correctly before using the theorem?`, answer: `Because it is the side whose square equals the sum of the squares of the other two.`, change: "Reasoning" },
+      { question: `How can a known triple help you spot an incorrect Pythagoras answer quickly?`, answer: `It provides a familiar check against the expected result.`, change: "Reasoning" }
+    ];
+  }
+  if (variant?.id === "compare-triangles") {
+    return [
+      { question: `Why does increasing one shorter side increase the hypotenuse?`, answer: `Because the sum of the squares on the shorter sides increases.`, change: "Reasoning" },
+      { question: `Can two different right-angled triangles have the same hypotenuse? Explain.`, answer: `Yes, if different shorter side combinations produce the same sum of squares.`, change: "Reasoning" },
+      { question: `What is more important for the hypotenuse: one side alone or the combined squares of both shorter sides?`, answer: `The combined squares of both shorter sides.`, change: "Reasoning" }
+    ];
+  }
+  return [
+    { question: `Why can Pythagoras only be used on right-angled triangles?`, answer: `Because the theorem depends on the right angle in that triangle.`, change: "Reasoning" },
+    { question: `How can you tell whether the missing side should be longer or shorter before calculating?`, answer: `The hypotenuse is always the longest side; a shorter side must be less than the hypotenuse.`, change: "Reasoning" },
+    { question: `Why does finding a shorter side involve subtraction instead of addition in Pythagoras?`, answer: `Because you are removing one square from the hypotenuse square total.`, change: "Reasoning" }
+  ];
+}
+
+function generateCompoundMeasureReasoning(_topic, variant, _settings, _difficultyKey, _worksheet) {
+  if (variant?.id === "rearrange-the-formula") {
+    return [
+      { question: `Why is rearranging a compound-measure formula really about identifying the unknown?`, answer: `Because the formula stays the same relationship; only the target quantity changes.`, change: "Reasoning" },
+      { question: `Why can multiplying be the correct step for one missing quantity but dividing for another?`, answer: `It depends on which value is being isolated in the relationship.`, change: "Reasoning" },
+      { question: `How can units help you decide whether a rearranged formula is sensible?`, answer: `The resulting unit should match the unknown quantity.`, change: "Reasoning" }
+    ];
+  }
+  if (variant?.id === "compare-rates") {
+    return [
+      { question: `Why is it not enough to compare only distance or only time when comparing speeds?`, answer: `Speed depends on both quantities together as a rate.`, change: "Reasoning" },
+      { question: `What makes a rate comparison harder than a direct size comparison?`, answer: `You must consider the relationship between two quantities, not just one value.`, change: "Reasoning" },
+      { question: `How can converting to a unit rate help with rate comparisons?`, answer: `It puts both situations on the same basis.`, change: "Reasoning" }
+    ];
+  }
+  return [
+    { question: `Why are speed, density, and pressure called compound measures?`, answer: `Because each combines two different quantities into one rate or measure.`, change: "Reasoning" },
+    { question: `What is the advantage of writing the formula before calculating a compound measure?`, answer: `It clarifies which quantities are needed and how they are connected.`, change: "Reasoning" },
+    { question: `How can unit labels help you avoid mistakes in compound-measure questions?`, answer: `They show whether the operation and final measure make sense.`, change: "Reasoning" }
+  ];
+}
+
+function generateSimultaneousEquationReasoning(_topic, variant, _settings, _difficultyKey, _worksheet) {
+  if (variant?.id === "which-pair") {
+    return [
+      { question: `Why must a claimed simultaneous-equation solution be checked in both equations?`, answer: `Because it must satisfy both relationships at the same time.`, change: "Reasoning" },
+      { question: `Why can one wrong sign in an equation pair change the solution completely?`, answer: `Because it changes the balance between x and y across the whole pair.`, change: "Reasoning" },
+      { question: `What is the quickest way to test a proposed solution pair?`, answer: `Substitute x and y into both equations.`, change: "Reasoning" }
+    ];
+  }
+  if (variant?.id === "write-the-pair") {
+    return [
+      { question: `Why is writing a pair from a known solution a strong check of understanding?`, answer: `Because you must create two valid relationships that meet at the same point.`, change: "Reasoning" },
+      { question: `Can many different pairs of simultaneous equations share the same solution?`, answer: `Yes, provided both equations are true for the same x and y values.`, change: "Reasoning" },
+      { question: `How can you verify a pair you have written yourself?`, answer: `Substitute the target solution into both equations.`, change: "Reasoning" }
+    ];
+  }
+  if (variant?.id === "error-spotting") {
+    return [
+      { question: `Why can a solution that works in one equation still be wrong overall?`, answer: `Because simultaneous equations require one pair that works in both equations.`, change: "Reasoning" },
+      { question: `What is the most common checking mistake after solving a simultaneous pair?`, answer: `Only checking one equation instead of both.`, change: "Reasoning" },
+      { question: `Why is it useful to write the final answer as both x and y together?`, answer: `Because the solution is an ordered pair, not two unrelated answers.`, change: "Reasoning" }
+    ];
+  }
+  return [
+    { question: `What does the word "simultaneous" mean in simultaneous equations?`, answer: `The same x and y values work in both equations at the same time.`, change: "Reasoning" },
+    { question: `Why do simultaneous equations often produce one pair of values rather than one value?`, answer: `Because there are two variables being solved together.`, change: "Reasoning" },
+    { question: `How can elimination or substitution both lead to the same final answer?`, answer: `They are different methods for isolating the same solution pair.`, change: "Reasoning" }
+  ];
+}
+
 function buildReasoningSet(topic, variant, settings, difficultyKey, worksheet) {
   const builder = reasoningGenerators[topic.generatorType] || generateGenericReasoning;
   const base = builder(topic, variant, settings, difficultyKey, worksheet).slice(0, 3);
@@ -1232,6 +2243,14 @@ const reasoningGenerators = {
   "symmetry-reflection-properties": generateSymmetryReflectionReasoning,
   "stem-leaf-frequency": generateStemLeafReasoning,
   "relative-frequency-intro": generateRelativeFrequencyReasoning,
+  "percentages-of-amounts": generatePercentageAmountReasoning,
+  "standard-form-intro": generateStandardFormReasoning,
+  "indices-laws-intro": generateIndicesReasoning,
+  "two-step-equations": generateTwoStepEquationReasoning,
+  "straight-line-graphs-intro": generateStraightLineGraphReasoning,
+  pythagoras: generatePythagorasReasoning,
+  "compound-measures": generateCompoundMeasureReasoning,
+  "simultaneous-equations-intro": generateSimultaneousEquationReasoning,
   "add-subtract-fractions": generateFractionOperationReasoning,
   "ratio-notation": generateRatioReasoning,
   "order-of-operations": generateOrderReasoning,
@@ -10242,6 +11261,10 @@ window.MDM_API = {
   topicCatalog,
   difficultySettings,
   defaultTopic,
+  getTopicYearTags,
+  getAvailableYearOptions,
+  getFilteredTopicEntries,
+  groupTopicEntriesBySubject,
   generators,
   reasoningGenerators,
   buildBulkQuestionSet,

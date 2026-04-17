@@ -6,6 +6,7 @@ if (!assessmentApi) {
 
 const assessmentForm = document.getElementById("assessment-form");
 const assessmentTopicRows = document.getElementById("assessment-topic-rows");
+const assessmentYearFilter = document.getElementById("assessment-year-filter");
 const assessmentTitleInput = document.getElementById("assessment-title-input");
 const assessmentYearInput = document.getElementById("assessment-year-input");
 const assessmentTimeInput = document.getElementById("assessment-time-input");
@@ -26,9 +27,7 @@ const assessmentState = {
   generationCounter: 0
 };
 
-const topicGroups = groupTopicsBySubject(assessmentApi.topicCatalog);
-const orderedTopics = Object.values(topicGroups).flat();
-
+buildAssessmentYearFilter();
 buildTopicRows();
 
 assessmentForm.addEventListener("submit", (event) => {
@@ -52,8 +51,33 @@ markSchemeToggle.addEventListener("change", () => {
 
 renderAssessment();
 
+assessmentYearFilter.addEventListener("change", () => {
+  buildTopicRows();
+  assessmentState.generationCounter += 1;
+  renderAssessment();
+});
+
+function buildAssessmentYearFilter() {
+  const options = assessmentApi.getAvailableYearOptions();
+  assessmentYearFilter.innerHTML = "";
+  options.forEach((value) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = value;
+    assessmentYearFilter.appendChild(option);
+  });
+  assessmentYearFilter.value = "All years";
+}
+
+function getAssessmentTopicEntries() {
+  return assessmentApi.getFilteredTopicEntries(assessmentYearFilter.value);
+}
+
 function buildTopicRows() {
   const countOptions = [3, 4, 5, 6, 8, 10];
+  const topicEntries = getAssessmentTopicEntries();
+  const topicGroups = assessmentApi.groupTopicEntriesBySubject(topicEntries);
+  const orderedTopics = topicEntries.map(([id, topic]) => ({ id, label: topic.label, topic }));
   assessmentTopicRows.innerHTML = "";
 
   for (let index = 0; index < 5; index += 1) {
@@ -106,6 +130,21 @@ function buildTopicRows() {
 }
 
 function populateTopicSelect(select, index) {
+  const topicEntries = getAssessmentTopicEntries();
+  const topicGroups = assessmentApi.groupTopicEntriesBySubject(topicEntries);
+  const orderedTopics = topicEntries.map(([id, topic]) => ({ id, label: topic.label, topic }));
+
+  if (!orderedTopics.length) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = `No topics available for ${assessmentYearFilter.value}`;
+    select.appendChild(option);
+    select.disabled = true;
+    return;
+  }
+
+  select.disabled = false;
+
   Object.entries(topicGroups).forEach(([subject, topics]) => {
     const group = document.createElement("optgroup");
     group.label = subject;

@@ -6,6 +6,7 @@ if (!starterApi) {
 
 const starterForm = document.getElementById("starter-form");
 const starterTopicRows = document.getElementById("starter-topic-rows");
+const starterYearFilter = document.getElementById("starter-year-filter");
 const starterResultsTitle = document.getElementById("starter-results-title");
 const starterSummary = document.getElementById("starter-summary");
 const starterGrid = document.getElementById("starter-grid");
@@ -21,10 +22,9 @@ const starterState = {
   generationCounter: 0
 };
 
-const starterTopicGroups = groupStarterTopicsBySubject(starterApi.topicCatalog);
-const starterOrderedTopics = Object.values(starterTopicGroups).flat();
 const difficultyRows = ["easy", "medium", "hard"];
 
+buildStarterYearFilter();
 buildStarterTopicRows();
 
 starterForm.addEventListener("submit", (event) => {
@@ -46,10 +46,43 @@ starterAnswerToggle.addEventListener("change", () => {
   starterAnswerSection.hidden = !starterAnswerToggle.checked;
 });
 
+starterYearFilter.addEventListener("change", () => {
+  buildStarterTopicRows();
+  starterState.generationCounter += 1;
+  renderStarterGrid();
+});
+
 renderStarterGrid();
 
+function buildStarterYearFilter() {
+  const options = starterApi.getAvailableYearOptions();
+  starterYearFilter.innerHTML = "";
+  options.forEach((value) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = value;
+    starterYearFilter.appendChild(option);
+  });
+  starterYearFilter.value = "All years";
+}
+
+function getStarterTopicGroups() {
+  return groupStarterTopicsBySubject(starterApi.getFilteredTopicEntries(starterYearFilter.value));
+}
+
+function getStarterOrderedTopics() {
+  return Object.values(getStarterTopicGroups()).flat();
+}
+
 function buildStarterTopicRows() {
+  const starterTopicGroups = getStarterTopicGroups();
+  const starterOrderedTopics = getStarterOrderedTopics();
   starterTopicRows.innerHTML = "";
+
+  if (!starterOrderedTopics.length) {
+    starterTopicRows.innerHTML = `<p class="assessment-summary-empty">No topics available for ${starterYearFilter.value}.</p>`;
+    return;
+  }
 
   Object.entries(starterTopicGroups).forEach(([subject, topics]) => {
     const group = document.createElement("section");
@@ -245,7 +278,7 @@ function buildStarterAnswerItem(item) {
 }
 
 function groupStarterTopicsBySubject(topicCatalog) {
-  return Object.entries(topicCatalog).reduce((groups, [id, topic]) => {
+  return topicCatalog.reduce((groups, [id, topic]) => {
     if (!groups[topic.subject]) {
       groups[topic.subject] = [];
     }
