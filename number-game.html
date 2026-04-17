@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Number Game | Minimally Different Maths</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="page-shell">
+    <nav class="page-nav">
+      <a class="page-nav-link" href="index.html">Lesson Generator</a>
+      <a class="page-nav-link" href="assessment.html">Assessment Builder</a>
+      <a class="page-nav-link" href="starter.html">Starter Questions</a>
+      <a class="page-nav-link" href="crossword.html">Crossword</a>
+      <a class="page-nav-link is-active" href="number-game.html">Number Game</a>
+    </nav>
+
+    <section class="hero">
+      <h1>Number Game</h1>
+      <p class="hero-copy">
+        A countdown-style numbers round. Generate six numbers and a target, then work towards the exact answer or the closest possible total using the four operations.
+      </p>
+    </section>
+
+    <section class="control-panel number-game-control-panel">
+      <form id="number-game-form" class="number-game-form">
+        <label class="field">
+          <span>Large numbers</span>
+          <select id="large-count" name="large-count">
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2" selected>2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Timer</span>
+          <select id="timer-seconds" name="timer-seconds">
+            <option value="0">Off</option>
+            <option value="30" selected>30 seconds</option>
+            <option value="45">45 seconds</option>
+            <option value="60">60 seconds</option>
+          </select>
+        </label>
+
+        <div class="number-game-button-stack">
+          <button id="number-game-generate-button" type="submit" class="primary-button">Generate Round</button>
+          <button id="number-game-start-button" type="button" class="secondary-button">Start Timer</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="results-panel number-game-results-panel">
+      <div class="results-header">
+        <div>
+          <p class="eyebrow">Number Round</p>
+          <h2 id="number-game-results-title">Countdown Numbers</h2>
+        </div>
+        <div class="action-row">
+          <div class="action-stack">
+            <label class="answer-toggle">
+              <input id="toggle-number-game-solution" type="checkbox">
+              <span>Show solution</span>
+            </label>
+          </div>
+          <div class="action-stack">
+            <button id="number-game-regenerate-button" class="secondary-button" type="button">Regenerate round</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="number-game-board">
+        <section class="number-game-target-panel">
+          <p class="eyebrow">Target</p>
+          <div id="number-game-target" class="number-game-target">000</div>
+          <div class="number-game-timer-wrap">
+            <span class="number-game-timer-label">Time</span>
+            <span id="number-game-timer" class="number-game-timer">30</span>
+          </div>
+        </section>
+
+        <section class="number-game-numbers-panel">
+          <p class="eyebrow">Numbers</p>
+          <div id="number-game-numbers" class="number-game-numbers"></div>
+        </section>
+      </div>
+
+      <section class="number-game-solution-panel" id="number-game-solution-panel" hidden>
+        <div class="number-game-solution-summary">
+          <div class="assessment-summary-card">
+            <span class="assessment-summary-label">Best total</span>
+            <strong id="number-game-best-total" class="assessment-summary-value">0</strong>
+          </div>
+          <div class="assessment-summary-card">
+            <span class="assessment-summary-label">Distance</span>
+            <strong id="number-game-distance" class="assessment-summary-value">0</strong>
+          </div>
+        </div>
+        <div class="number-game-solution-card">
+          <p class="eyebrow">Method</p>
+          <div id="number-game-solution-text" class="number-game-solution-text"></div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="topics-data.js"></script>
+  <script src="script.js"></script>
+  <script src="number-game.js"></script>
+</body>
+</html>

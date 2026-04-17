@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minimally Different Maths Prototype</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="page-shell">
+    <nav class="page-nav">
+      <a class="page-nav-link is-active" href="index.html">Lesson Generator</a>
+      <a class="page-nav-link" href="assessment.html">Assessment Builder</a>
+      <a class="page-nav-link" href="starter.html">Starter Questions</a>
+      <a class="page-nav-link" href="crossword.html">Crossword</a>
+      <a class="page-nav-link" href="number-game.html">Number Game</a>
+    </nav>
+
+    <section class="hero">
+      <h1>Minimally Different Maths</h1>
+      <p class="hero-copy">
+        Choose a topic, difficulty, sequence style, and bulk-question count to generate a structured run where each step changes just one useful feature.
+      </p>
+    </section>
+
+    <section class="control-panel">
+      <form id="generator-form" class="generator-form">
+        <label class="field">
+          <span>Topic</span>
+          <select id="topic" name="topic"></select>
+        </label>
+
+        <label class="field">
+          <span>Difficulty</span>
+          <select id="difficulty" name="difficulty">
+            <option value="easy">Easy</option>
+            <option value="medium" selected>Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Sequence</span>
+          <select id="variant" name="variant"></select>
+        </label>
+
+        <label class="field">
+          <span>Bulk questions</span>
+          <select id="bulk-count" name="bulk-count">
+            <option value="5">5</option>
+            <option value="10" selected>10</option>
+            <option value="15">15</option>
+            <option value="20">20</option>
+          </select>
+        </label>
+
+        <button id="generate-button" type="submit" class="primary-button">Generate 10 Questions</button>
+      </form>
+
+      <div class="topic-meta-card">
+        <div class="meta-row meta-row-compact">
+          <span class="meta-label">Subject</span>
+          <span id="meta-subject" class="meta-value">Number</span>
+        </div>
+        <div class="meta-row meta-row-compact">
+          <span class="meta-label">Year band</span>
+          <span id="meta-year" class="meta-value">Years 5-7</span>
+        </div>
+        <div class="meta-row meta-row-compact">
+          <span class="meta-label">Difficulty focus</span>
+          <span id="meta-difficulty" class="meta-value">Missing values and varied representations</span>
+        </div>
+        <div class="meta-row meta-row-stack meta-row-objective">
+          <span class="meta-label">Objective</span>
+          <span id="meta-objective" class="meta-value">Recognise and create equivalent fractions by scaling numerator and denominator by the same factor.</span>
+        </div>
+        <div class="meta-row meta-row-stack meta-row-sequence">
+          <span class="meta-label">Sequence note</span>
+          <span id="meta-variant" class="meta-value">Progress through numerator and denominator gaps with gradually varied prompt types.</span>
+        </div>
+        <div class="meta-row meta-row-stack principle-card">
+          <h2>Design rule</h2>
+          <p id="topic-principle">
+            Questions progress by making one deliberate change at a time.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="results-panel">
+      <div class="results-header">
+        <div>
+          <p class="eyebrow">Output</p>
+          <h2 id="results-title">Equivalent Fractions - Medium</h2>
+        </div>
+        <div class="action-row">
+          <div class="action-stack">
+            <label class="answer-toggle">
+              <input id="toggle-answers" type="checkbox">
+              <span>Show answers</span>
+            </label>
+            <label class="answer-toggle">
+              <input id="toggle-change-notes" type="checkbox">
+              <span>Show change notes</span>
+            </label>
+          </div>
+          <div class="action-stack">
+            <button id="shuffle-button" class="secondary-button" type="button">Regenerate</button>
+            <button id="print-button" class="secondary-button" type="button">Print worksheet</button>
+          </div>
+        </div>
+      </div>
+
+      <section class="teaching-section">
+        <div class="teaching-header">
+          <p class="eyebrow">Teaching Sequence</p>
+          <h3>My Turn, Our Turn, Your Turn</h3>
+        </div>
+        <div id="teaching-sequence" class="teaching-grid"></div>
+      </section>
+
+      <ol id="question-list" class="question-list"></ol>
+
+      <section class="reasoning-section">
+        <div class="reasoning-header">
+          <p class="eyebrow">Reasoning</p>
+          <h3>Deeper Thinking</h3>
+        </div>
+        <ol id="reasoning-list" class="reasoning-list"></ol>
+      </section>
+    </section>
+
+    <section class="worksheet-panel">
+      <div class="worksheet-sheet">
+        <div class="worksheet-heading">
+          <div>
+            <p class="eyebrow">Printable View</p>
+            <h2 id="worksheet-title">Equivalent Fractions Worksheet</h2>
+          </div>
+          <p id="worksheet-meta" class="worksheet-meta">Number | Years 5-7 | Missing values and varied representations</p>
+        </div>
+
+        <ol id="worksheet-questions" class="worksheet-questions"></ol>
+
+        <section class="worksheet-reasoning-section">
+          <h3>Reasoning</h3>
+          <ol id="worksheet-reasoning-questions" class="worksheet-questions worksheet-reasoning-questions"></ol>
+        </section>
+
+        <section class="answer-section">
+          <h3>Answer Key</h3>
+          <ol id="answer-key" class="answer-key" hidden></ol>
+          <h3 id="reasoning-answer-title" hidden>Reasoning Answers</h3>
+          <ol id="reasoning-answer-key" class="answer-key" hidden></ol>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script src="topics-data.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Starter Questions | Minimally Different Maths</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="page-shell">
+    <nav class="page-nav">
+      <a class="page-nav-link" href="index.html">Lesson Generator</a>
+      <a class="page-nav-link" href="assessment.html">Assessment Builder</a>
+      <a class="page-nav-link is-active" href="starter.html">Starter Questions</a>
+      <a class="page-nav-link" href="crossword.html">Crossword</a>
+      <a class="page-nav-link" href="number-game.html">Number Game</a>
+    </nav>
+
+    <section class="hero">
+      <h1>Starter Questions</h1>
+      <p class="hero-copy">
+        Choose up to five topics and generate a 3 by 3 starter grid. The top row is easier, the middle row is medium, and the bottom row is harder.
+      </p>
+    </section>
+
+    <section class="control-panel starter-control-panel">
+      <form id="starter-form" class="starter-form">
+        <div class="starter-topic-picker">
+          <div class="assessment-topic-picker-header">
+            <h2>Topic Selection</h2>
+            <p>Select up to 5 topics to mix into the starter grid.</p>
+          </div>
+          <div id="starter-topic-rows" class="starter-topic-list"></div>
+        </div>
+
+        <button id="starter-generate-button" type="submit" class="primary-button">Generate Starter Grid</button>
+      </form>
+    </section>
+
+    <section class="results-panel starter-results-panel">
+      <div class="results-header">
+        <div>
+          <p class="eyebrow">Starter Output</p>
+          <h2 id="starter-results-title">9 Question Starter</h2>
+        </div>
+        <div class="action-row">
+          <div class="action-stack">
+            <label class="answer-toggle">
+              <input id="toggle-starter-answers" type="checkbox">
+              <span>Show answers</span>
+            </label>
+          </div>
+          <div class="action-stack">
+            <button id="starter-regenerate-button" class="secondary-button" type="button">Regenerate starter</button>
+            <button id="starter-print-button" class="secondary-button" type="button">Print starter</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="starter-summary" class="assessment-summary"></div>
+    </section>
+
+    <section class="worksheet-panel starter-sheet-panel">
+      <div class="worksheet-sheet starter-sheet">
+        <header class="starter-sheet-header">
+          <div>
+            <p class="eyebrow">Printable View</p>
+            <h2 id="starter-sheet-title">Starter Questions</h2>
+          </div>
+          <p id="starter-sheet-meta" class="worksheet-meta">Easy to hard across 9 questions</p>
+        </header>
+
+        <div id="starter-grid" class="starter-grid"></div>
+
+        <section id="starter-answer-section" class="answer-section" hidden>
+          <h3>Answers</h3>
+          <ol id="starter-answer-list" class="answer-key"></ol>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script src="topics-data.js"></script>
+  <script src="script.js"></script>
+  <script src="starter.js"></script>
+</body>
+</html>

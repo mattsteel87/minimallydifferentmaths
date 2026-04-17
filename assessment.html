@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assessment Builder | Minimally Different Maths</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="page-shell">
+    <nav class="page-nav">
+      <a class="page-nav-link" href="index.html">Lesson Generator</a>
+      <a class="page-nav-link is-active" href="assessment.html">Assessment Builder</a>
+      <a class="page-nav-link" href="starter.html">Starter Questions</a>
+      <a class="page-nav-link" href="crossword.html">Crossword</a>
+      <a class="page-nav-link" href="number-game.html">Number Game</a>
+    </nav>
+
+    <section class="hero">
+      <h1>Assessment Builder</h1>
+      <p class="hero-copy">
+        Build a formal assessment across up to five topics. Questions are sequenced from fluency into reasoning and multi-step problem solving so the paper feels like an assessment rather than a worksheet.
+      </p>
+    </section>
+
+    <section class="control-panel assessment-control-panel">
+      <form id="assessment-form" class="assessment-form">
+        <div class="assessment-meta-grid">
+          <label class="field">
+            <span>Assessment title</span>
+            <input id="assessment-title-input" name="assessment-title" type="text" value="Year 7 Maths Assessment">
+          </label>
+
+          <label class="field">
+            <span>Year group</span>
+            <input id="assessment-year-input" name="assessment-year" type="text" value="Year 7">
+          </label>
+
+          <label class="field">
+            <span>Time allowed</span>
+            <input id="assessment-time-input" name="assessment-time" type="text" value="40 minutes">
+          </label>
+        </div>
+
+        <div class="assessment-topic-picker">
+          <div class="assessment-topic-picker-header">
+            <h2>Topic Selection</h2>
+            <p>Select up to 5 topics and choose how many questions to draw from each one.</p>
+          </div>
+
+          <div id="assessment-topic-rows" class="assessment-topic-rows"></div>
+        </div>
+
+        <button id="assessment-generate-button" type="submit" class="primary-button">Generate Assessment</button>
+      </form>
+    </section>
+
+    <section class="results-panel assessment-results-panel">
+      <div class="results-header">
+        <div>
+          <p class="eyebrow">Assessment Output</p>
+          <h2 id="assessment-results-title">Assessment Preview</h2>
+        </div>
+        <div class="action-row">
+          <div class="action-stack">
+            <label class="answer-toggle">
+              <input id="toggle-mark-scheme" type="checkbox">
+              <span>Show mark scheme</span>
+            </label>
+          </div>
+          <div class="action-stack">
+            <button id="assessment-regenerate-button" class="secondary-button" type="button">Regenerate assessment</button>
+            <button id="assessment-print-button" class="secondary-button" type="button">Print assessment</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="assessment-summary" class="assessment-summary"></div>
+    </section>
+
+    <section class="worksheet-panel assessment-paper-panel">
+      <div class="worksheet-sheet assessment-sheet">
+        <header class="assessment-paper-header">
+          <div>
+            <p class="eyebrow">Printable View</p>
+            <h2 id="assessment-paper-title">Year 7 Maths Assessment</h2>
+          </div>
+          <div class="assessment-paper-meta">
+            <p id="assessment-paper-year">Year 7</p>
+            <p id="assessment-paper-time">40 minutes</p>
+            <p id="assessment-paper-marks">0 marks</p>
+          </div>
+        </header>
+
+        <section class="assessment-candidate-box">
+          <div class="candidate-line"><span>Name</span><span class="line-fill"></span></div>
+          <div class="candidate-line"><span>Class</span><span class="line-fill"></span></div>
+          <div class="candidate-line"><span>Date</span><span class="line-fill"></span></div>
+        </section>
+
+        <section class="assessment-instructions">
+          <h3>Instructions</h3>
+          <ul>
+            <li>Answer all questions.</li>
+            <li>Show clear working for reasoning and problem-solving questions.</li>
+            <li>Write your answers in the spaces provided where possible.</li>
+          </ul>
+        </section>
+
+        <div id="assessment-paper-sections" class="assessment-paper-sections"></div>
+
+        <section id="assessment-mark-scheme" class="answer-section assessment-mark-scheme" hidden>
+          <h3>Mark Scheme</h3>
+          <ol id="assessment-mark-scheme-list" class="answer-key"></ol>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script src="topics-data.js"></script>
+  <script src="script.js"></script>
+  <script src="assessment.js"></script>
+</body>
+</html>
+
