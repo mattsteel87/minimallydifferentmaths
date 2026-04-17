@@ -1196,8 +1196,7 @@ function buildDiagramBlock(diagram, className) {
 
 function buildAnswerItem(item, index, prefix = "") {
   const entry = document.createElement("li");
-  const label = prefix ? `${prefix}${index + 1}.` : `${index + 1}.`;
-  entry.innerHTML = `${label} <span class="answer-text">${renderMathMarkup(item.answer)}</span>`;
+  entry.innerHTML = `<span class="answer-text">${renderMathMarkup(item.answer)}</span>`;
   return entry;
 }
 
