@@ -112,13 +112,18 @@ h1 {
 .generator-form {
   grid-area: form;
   display: grid;
-  grid-template-columns: minmax(220px, 1.35fr) minmax(170px, 0.9fr) minmax(220px, 1.25fr) minmax(200px, 0.95fr);
+  grid-template-columns: minmax(135px, 0.72fr) minmax(210px, 1.3fr) minmax(150px, 0.85fr) minmax(210px, 1.2fr) minmax(150px, 0.8fr);
   gap: 1rem;
   align-items: end;
   padding: 1.15rem;
   border-radius: 22px;
   background: rgba(255, 250, 242, 0.78);
   border: 1px solid rgba(31, 42, 46, 0.08);
+}
+
+#year-filter {
+  padding-left: 0.85rem;
+  padding-right: 2.2rem;
 }
 
 .field {
@@ -598,6 +603,14 @@ body.showing-answers .symmetry-line {
   margin-top: 0.35rem;
   font-size: 1.02rem;
   line-height: 1.6;
+}
+
+sup {
+  font-size: 0.72em;
+  line-height: 0;
+  vertical-align: super;
+  position: relative;
+  top: -0.15em;
 }
 
 .math-fraction {

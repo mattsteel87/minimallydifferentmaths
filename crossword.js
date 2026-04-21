@@ -5,6 +5,7 @@ if (!crosswordApi) {
 }
 
 const crosswordForm = document.getElementById("crossword-form");
+const crosswordYearFilter = document.getElementById("crossword-year-filter");
 const crosswordTopicSelect = document.getElementById("crossword-topic");
 const crosswordResultsTitle = document.getElementById("crossword-results-title");
 const crosswordSummary = document.getElementById("crossword-summary");
@@ -179,6 +180,7 @@ const crosswordTopicVocabulary = {
   substitution: ["substitute", "variable", "expression", "coefficient", "term", "equation"]
 };
 
+buildCrosswordYearFilter();
 buildCrosswordTopicSelect();
 
 crosswordForm.addEventListener("submit", (event) => {
@@ -200,18 +202,48 @@ crosswordAnswerToggle.addEventListener("change", () => {
   updateCrosswordAnswerVisibility();
 });
 
+crosswordYearFilter.addEventListener("change", () => {
+  buildCrosswordTopicSelect();
+  crosswordState.generationCounter += 1;
+  renderCrossword();
+});
+
 renderCrossword();
+
+function buildCrosswordYearFilter() {
+  const options = crosswordApi.getAvailableYearOptions();
+  crosswordYearFilter.innerHTML = "";
+  options.forEach((value) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = value;
+    crosswordYearFilter.appendChild(option);
+  });
+  crosswordYearFilter.value = "All years";
+}
 
 function buildCrosswordTopicSelect() {
   crosswordTopicSelect.innerHTML = "";
 
-  const grouped = Object.entries(crosswordApi.topicCatalog).reduce((groups, [topicKey, topic]) => {
+  const filteredEntries = crosswordApi.getFilteredTopicEntries(crosswordYearFilter.value);
+  const grouped = filteredEntries.reduce((groups, [topicKey, topic]) => {
     if (!groups[topic.subject]) {
       groups[topic.subject] = [];
     }
     groups[topic.subject].push([topicKey, topic]);
     return groups;
   }, {});
+
+  if (!filteredEntries.length) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = `No topics available for ${crosswordYearFilter.value}`;
+    crosswordTopicSelect.appendChild(option);
+    crosswordTopicSelect.disabled = true;
+    return;
+  }
+
+  crosswordTopicSelect.disabled = false;
 
   Object.entries(grouped).forEach(([subject, topics]) => {
     const optgroup = document.createElement("optgroup");
@@ -227,7 +259,8 @@ function buildCrosswordTopicSelect() {
     crosswordTopicSelect.appendChild(optgroup);
   });
 
-  crosswordTopicSelect.value = crosswordApi.defaultTopic;
+  const availableTopicKeys = filteredEntries.map(([topicKey]) => topicKey);
+  crosswordTopicSelect.value = availableTopicKeys.includes(crosswordApi.defaultTopic) ? crosswordApi.defaultTopic : availableTopicKeys[0];
 }
 
 function renderCrossword() {
@@ -235,6 +268,15 @@ function renderCrossword() {
   const topic = crosswordApi.topicCatalog[topicKey];
 
   if (!topic) {
+    crosswordResultsTitle.textContent = "Topic Crossword";
+    crosswordSheetTitle.textContent = "Topic Crossword";
+    crosswordSheetMeta.textContent = `${crosswordYearFilter.value} | No live topics yet`;
+    crosswordSummary.innerHTML = `<p class="assessment-summary-empty">No topics are currently live for ${crosswordYearFilter.value}.</p>`;
+    crosswordGrid.innerHTML = "";
+    crosswordAcrossClues.innerHTML = "";
+    crosswordDownClues.innerHTML = "";
+    crosswordAnswerList.innerHTML = "";
+    crosswordAnswerSection.hidden = !crosswordAnswerToggle.checked;
     return;
   }
 
