@@ -639,18 +639,6 @@ sup {
   padding-top: 0.08em;
 }
 
-.change-note {
-  display: inline-block;
-  margin-top: 0.65rem;
-  color: var(--muted);
-  font-size: 0.9rem;
-  line-height: 1.45;
-}
-
-.change-note[hidden] {
-  display: none;
-}
-
 .worksheet-sheet {
   border-radius: 20px;
   padding: 1.5rem;

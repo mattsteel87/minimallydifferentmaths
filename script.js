@@ -133,7 +133,6 @@ const answerKey = document.getElementById("answer-key");
 const reasoningAnswerTitle = document.getElementById("reasoning-answer-title");
 const reasoningAnswerKey = document.getElementById("reasoning-answer-key");
 const answerToggle = document.getElementById("toggle-answers");
-const changeNotesToggle = document.getElementById("toggle-change-notes");
 let generationCounter = 0;
 const secondaryYearSequence = ["Year 7", "Year 8", "Year 9", "Year 10", "Year 11"];
 
@@ -300,12 +299,6 @@ function initializeWorksheetPage() {
     });
   }
 
-  if (changeNotesToggle) {
-    changeNotesToggle.addEventListener("change", () => {
-      updateChangeNoteVisibility();
-    });
-  }
-
   updateTopicDetails();
   renderWorksheet();
 }
@@ -430,7 +423,6 @@ function renderWorksheet(options = {}) {
     answerKey.innerHTML = "";
     reasoningAnswerKey.innerHTML = "";
     updateAnswerVisibility();
-    updateChangeNoteVisibility();
     return;
   }
   const { forceFresh = false } = options;
@@ -487,7 +479,6 @@ function renderWorksheet(options = {}) {
   });
 
   updateAnswerVisibility();
-  updateChangeNoteVisibility();
 }
 
 function buildSeparateTeachingSequence(topic, variant, settings, difficultyKey, generator, worksheet, bulkQuestions = []) {
@@ -559,50 +550,131 @@ function buildBulkQuestionSet(topic, variant, settings, difficultyKey, generator
   const collected = [];
   const seenQuestions = new Set();
   const seenPrompts = new Set();
+  const sequenceBatches = [];
   const supplementalPool = [];
   const blockedPrompts = new Set(blockedPromptTexts.map((text) => (text || "").trim()).filter(Boolean));
 
-  function addQuestions(items, allowDuplicates = false) {
-    items.forEach((item) => {
-      const key = getQuestionKey(item);
-      const promptText = getQuestionPromptText(item);
+  function addToSupplementalPool(item) {
+    if (!item) {
+      return;
+    }
 
-      if (collected.length >= count) {
-        return;
-      }
+    const key = getQuestionKey(item);
+    const promptText = getQuestionPromptText(item);
+    if (!supplementalPool.some((poolItem) => getQuestionKey(poolItem) === key || getQuestionPromptText(poolItem) === promptText)) {
+      supplementalPool.push(item);
+    }
+  }
 
-      if (blockedPrompts.has(promptText)) {
-        return;
-      }
+  function tryCollectQuestion(item) {
+    if (!item || collected.length >= count) {
+      return false;
+    }
 
-      if (!allowDuplicates && (seenQuestions.has(key) || seenPrompts.has(promptText))) {
-        if (!supplementalPool.some((poolItem) => getQuestionKey(poolItem) === key || getQuestionPromptText(poolItem) === promptText)) {
-          supplementalPool.push(item);
-        }
-        return;
-      }
+    const key = getQuestionKey(item);
+    const promptText = getQuestionPromptText(item);
 
-      seenQuestions.add(key);
-      seenPrompts.add(promptText);
-      collected.push(item);
-    });
+    if (blockedPrompts.has(promptText)) {
+      return false;
+    }
+
+    if (seenQuestions.has(key) || seenPrompts.has(promptText)) {
+      addToSupplementalPool(item);
+      return false;
+    }
+
+    seenQuestions.add(key);
+    seenPrompts.add(promptText);
+    collected.push(item);
+    return true;
+  }
+
+  function rememberBatch(items) {
+    if (!Array.isArray(items) || !items.length) {
+      return;
+    }
+
+    sequenceBatches.push(items.filter(Boolean));
   }
 
   if (!forceFresh) {
-    addQuestions(seedQuestions);
+    rememberBatch(seedQuestions);
     if (collected.length >= count) {
       return finalizeBulkSequence(collected.slice(0, count));
+    }
+    if (seedQuestions.length >= count) {
+      return finalizeBulkSequence(seedQuestions.slice(0, count));
     }
   }
 
   for (let attempt = 0; attempt < 80 && collected.length < count; attempt += 1) {
     const nextWorksheet = generator(topic, variant, { ...settings, generationCounter: (settings.generationCounter || 0) + attempt + 1 }, difficultyKey);
-    addQuestions(nextWorksheet.questions);
+    rememberBatch(nextWorksheet.questions);
+  }
+
+  if (!sequenceBatches.length && seedQuestions.length) {
+    rememberBatch(seedQuestions);
+  }
+
+  if (sequenceBatches.length) {
+    const maxBatchLength = Math.max(...sequenceBatches.map((batch) => batch.length));
+    const primaryBatch = sequenceBatches[0] || [];
+    const extraStages = Array.from({ length: maxBatchLength }, () => []);
+
+    sequenceBatches.slice(1).forEach((batch) => {
+      batch.forEach((item, stageIndex) => {
+        if (item) {
+          extraStages[stageIndex].push(item);
+        }
+      });
+    });
+
+    if (primaryBatch.length) {
+      let remainingExtrasTarget = Math.max(count - Math.min(primaryBatch.length, count), 0);
+
+      primaryBatch.forEach((item, stageIndex) => {
+        if (collected.length >= count) {
+          return;
+        }
+
+        tryCollectQuestion(item);
+
+        const remainingStages = primaryBatch.length - stageIndex - 1;
+        const extrasForStage = Math.min(
+          extraStages[stageIndex].length,
+          Math.ceil(remainingExtrasTarget / Math.max(remainingStages + 1, 1))
+        );
+
+        let inserted = 0;
+        while (inserted < extrasForStage && collected.length < count && extraStages[stageIndex].length) {
+          const candidate = extraStages[stageIndex].shift();
+          if (tryCollectQuestion(candidate)) {
+            inserted += 1;
+            remainingExtrasTarget = Math.max(remainingExtrasTarget - 1, 0);
+          }
+        }
+      });
+    }
+
+    for (let roundIndex = 0; collected.length < count; roundIndex += 1) {
+      let addedInRound = false;
+
+      for (let stageIndex = 0; stageIndex < extraStages.length && collected.length < count; stageIndex += 1) {
+        const candidate = extraStages[stageIndex][roundIndex];
+        if (candidate && tryCollectQuestion(candidate)) {
+          addedInRound = true;
+        }
+      }
+
+      if (!addedInRound) {
+        break;
+      }
+    }
   }
 
   if (collected.length < count) {
     if (!supplementalPool.length) {
-      supplementalPool.push(...seedQuestions);
+      sequenceBatches.flat().forEach((item) => addToSupplementalPool(item));
     }
 
     let fillerIndex = 0;
@@ -1298,14 +1370,6 @@ function updateAnswerVisibility() {
   document.body.classList.toggle("showing-answers", showAnswers);
 }
 
-function updateChangeNoteVisibility() {
-  const showNotes = changeNotesToggle.checked;
-
-  document.querySelectorAll(".change-note").forEach((element) => {
-    element.hidden = !showNotes;
-  });
-}
-
 function buildTeachingCard(item) {
   const entry = document.createElement("article");
   entry.className = "teaching-card";
@@ -1339,15 +1403,10 @@ function buildOutputCard(item, index) {
   text.className = "question-text";
   text.innerHTML = renderMathMarkup(item.question);
 
-  const note = document.createElement("span");
-  note.className = "change-note";
-  note.textContent = `Change from previous: ${item.change}`;
-
   entry.append(number, text);
   if (item.diagram) {
     entry.appendChild(buildDiagramBlock(item.diagram, "question-diagram"));
   }
-  entry.append(note);
   return entry;
 }
 
