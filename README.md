@@ -15,6 +15,21 @@ This is a lightweight browser prototype that generates 10 minimally different qu
 
 Open [index.html](/C:/Users/msteel/OneDrive%20-%20Holland%20&%20Barrett/Documents/TPT/minimally_different_app/index.html) in a browser.
 
+## Google Analytics
+
+GA4 is wired into all public pages through:
+
+- `analytics-config.js`
+- `analytics.js`
+
+To enable tracking, set your Google Analytics measurement ID in `analytics-config.js`:
+
+```js
+window.GA_MEASUREMENT_ID = "G-XXXXXXXXXX";
+```
+
+Once deployed, verify tracking in the GA4 Realtime report.
+
 ## File structure
 
 - `topics-data.js`: topic metadata, variants, and difficulty settings

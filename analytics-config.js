@@ -1,0 +1,1 @@
+window.GA_MEASUREMENT_ID = "G-8G2D21011S";

@@ -3,11 +3,9 @@ $ErrorActionPreference = "Stop"
 $projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $distPath = Join-Path $projectRoot "dist"
 
-if (Test-Path $distPath) {
-  Remove-Item -LiteralPath $distPath -Recurse -Force
+if (-not (Test-Path $distPath)) {
+  New-Item -ItemType Directory -Path $distPath | Out-Null
 }
-
-New-Item -ItemType Directory -Path $distPath | Out-Null
 
 $filesToPublish = @(
   "index.html",
@@ -15,6 +13,8 @@ $filesToPublish = @(
   "starter.html",
   "crossword.html",
   "number-game.html",
+  "analytics-config.js",
+  "analytics.js",
   "script.js",
   "assessment.js",
   "starter.js",
