@@ -34,6 +34,8 @@ const generators = {
   "simultaneous-equations-intro": generateSimultaneousEquationsIntro,
   "percentage-change": generatePercentageChange,
   "rearranging-formulae": generateRearrangingFormulae,
+  "factorising-single-brackets": generateFactorisingSingleBrackets,
+  "linear-inequalities-intro": generateLinearInequalitiesIntro,
   "algebraic-notation": generateAlgebraicNotation,
   perimeter: generatePerimeter,
   "angle-facts": generateAngleFacts,
@@ -89,6 +91,8 @@ const teachingGenerators = {
   "simultaneous-equations-intro": generateSimultaneousEquationsIntroTeaching,
   "percentage-change": generatePercentageChangeTeaching,
   "rearranging-formulae": generateRearrangingFormulaeTeaching,
+  "factorising-single-brackets": generateFactorisingSingleBracketsTeaching,
+  "linear-inequalities-intro": generateLinearInequalitiesIntroTeaching,
   "algebraic-notation": generateAlgebraicNotationTeaching,
   perimeter: generatePerimeterTeaching,
   "angle-facts": generateAngleFactsTeaching,
@@ -2595,6 +2599,16 @@ function getRearrangingFormulaSpecs(difficultyKey, generationOffset = 0) {
     const divisor = divisors[(generationOffset + groupIndex) % divisors.length];
     const subjectValue = difficultyKey === "easy" ? 6 + groupIndex : difficultyKey === "hard" ? 10 + groupIndex : 8 + groupIndex;
 
+    if (difficultyKey === "easy") {
+      specs.push(
+        { output, subject, type: "add", constant: constantA, subjectValue, change: specs.length === 0 ? "Starting example." : "Only the subject letter changes." },
+        { output, subject, type: "subtract", constant: constantA, subjectValue: subjectValue + constantA, change: "Only the sign changes." },
+        { output, subject, type: "coeff-plus", coeff: coeffA, constant: constantB, subjectValue, change: "Only the coefficient structure changes." },
+        { output, subject, type: "divide", divisor, subjectValue: divisor * subjectValue, change: "Only the operation changes." }
+      );
+      continue;
+    }
+
     specs.push(
       { output, subject, type: "add", constant: constantA, subjectValue, change: specs.length === 0 ? "Starting example." : "Only the subject letter changes." },
       { output, subject, type: "subtract", constant: constantA, subjectValue: subjectValue + constantA, change: "Only the sign changes." },
@@ -2602,10 +2616,10 @@ function getRearrangingFormulaSpecs(difficultyKey, generationOffset = 0) {
       { output, subject, type: "coeff-plus", coeff: coeffB, constant: constantB, subjectValue: subjectValue + coeffB, change: "Only the coefficient changes." }
     );
 
-    if (groupIndex < 3) {
+    if (groupIndex < 3 || difficultyKey === "hard") {
       specs.push(
         { output, subject, type: "divide", divisor, subjectValue: divisor * (subjectValue + 1), change: "Only the operation changes." },
-        { output, subject, type: "divide-plus", divisor, constant: difficultyKey === "easy" ? 2 : 3, subjectValue: divisor * (subjectValue + 2), change: "Only one extra additive term is introduced." }
+        { output, subject, type: "divide-plus", divisor, constant: difficultyKey === "hard" ? 4 : 3, subjectValue: divisor * (subjectValue + 2), change: "Only one extra additive term is introduced." }
       );
     }
   }
@@ -2663,8 +2677,270 @@ function evaluateFormulaOutput(spec, subjectValue) {
   return (subjectValue / spec.divisor) + spec.constant;
 }
 
+function generateFactorisingSingleBracketsTeaching(topic, variant, settings, difficultyKey) {
+  const base = getFactorisingSingleBracketsBase(settings, difficultyKey);
+  let sequence;
+
+  if (variant.id === "match-factorised-form") {
+    sequence = [
+      { question: `Which factorised form matches ${base.items[0].expanded}? A) ${base.items[0].factorised} B) ${base.items[0].wrong}`, answer: "A", change: "Model identifying the common factor first." },
+      { question: `Which factorised form matches ${base.items[1].expanded}? A) ${base.items[1].factorised} B) ${base.items[1].wrong}`, answer: "A", change: "Only the sign changes inside the bracket." },
+      { question: `Which factorised form matches ${base.items[2].expanded}? A) ${base.items[2].factorised} B) ${base.items[2].wrong}`, answer: "A", change: "Only the common factor changes." }
+    ];
+  } else if (variant.id === "complete-the-factorisation") {
+    sequence = [
+      { question: `Complete: ${base.items[0].expanded} = ${base.items[0].factorisedMissing}.`, answer: base.items[0].factorised, change: "Model dividing each term by the common factor to complete the bracket." },
+      { question: `Complete: ${base.items[1].expanded} = ${base.items[1].factorisedMissing}.`, answer: base.items[1].factorised, change: "Only the sign changes inside the bracket." },
+      { question: `Complete: ${base.items[2].expanded} = ${base.items[2].factorisedMissing}.`, answer: base.items[2].factorised, change: "Only the common factor changes." }
+    ];
+  } else if (variant.id === "error-spotting") {
+    sequence = [
+      { question: `A pupil says ${base.items[0].expanded} = ${base.items[0].wrong}. Correct the factorisation.`, answer: base.items[0].factorised, change: "Model checking that both bracket terms are divided by the common factor correctly." },
+      { question: `A pupil says ${base.items[1].expanded} = ${base.items[1].wrong}. Correct the factorisation.`, answer: base.items[1].factorised, change: "Only the sign changes." },
+      { question: `A pupil says ${base.items[2].expanded} = ${base.items[2].wrong}. Correct the factorisation.`, answer: base.items[2].factorised, change: "Only the common factor changes." }
+    ];
+  } else {
+    sequence = [
+      { question: `Factorise ${base.items[0].expanded}.`, answer: base.items[0].factorised, change: "Model taking out the highest common factor." },
+      { question: `Factorise ${base.items[1].expanded}.`, answer: base.items[1].factorised, change: "Only the sign changes inside the bracket." },
+      { question: `Factorise ${base.items[2].expanded}.`, answer: base.items[2].factorised, change: "Only the common factor changes." }
+    ];
+  }
+
+  return createTeachingSequence(topic, variant, sequence);
+}
+
+function generateFactorisingSingleBrackets(_topic, variant, settings, difficultyKey) {
+  const base = getFactorisingSingleBracketsBase(settings, difficultyKey);
+  if (variant.id === "match-factorised-form") return { questions: base.matchItems.map((item, index) => ({ question: item.question, answer: item.answer, change: item.change || factorisingChange(index) })) };
+  if (variant.id === "complete-the-factorisation") return { questions: base.completeItems.map((item, index) => ({ question: item.question, answer: item.answer, change: item.change || factorisingChange(index) })) };
+  if (variant.id === "error-spotting") return { questions: base.errorItems.map((item, index) => ({ question: item.question, answer: item.answer, change: item.change || factorisingChange(index) })) };
+  return { questions: base.factoriseItems.map((item, index) => ({ question: item.question, answer: item.answer, change: item.change || factorisingChange(index) })) };
+}
+
+function getFactorisingSingleBracketsBase(settings, difficultyKey) {
+  const generationOffset = settings?.generationCounter || 0;
+  const factorBank = difficultyKey === "easy" ? [2, 3, 4, 5] : difficultyKey === "hard" ? [3, 4, 5, 6, -2] : [2, 3, 4, 5, 6];
+  const termBank = difficultyKey === "easy" ? [1, 2, 3, 4, 5, 6] : difficultyKey === "hard" ? [2, 3, 4, 5, 6, 7, 8] : [2, 3, 4, 5, 6, 7];
+  const variableBank = ["x", "y", "a", "m", "p", "t"];
+  const items = [];
+
+  for (let groupIndex = 0; groupIndex < 6; groupIndex += 1) {
+    const factor = factorBank[(generationOffset + groupIndex) % factorBank.length];
+    const variable = variableBank[(generationOffset + groupIndex) % variableBank.length];
+    const coeffA = difficultyKey === "easy" ? 1 : termBank[(generationOffset + groupIndex) % termBank.length];
+    const coeffB = difficultyKey === "easy" ? 1 : termBank[(generationOffset + groupIndex + 2) % termBank.length];
+    const constA = termBank[(generationOffset + groupIndex + 3) % termBank.length];
+    const constB = termBank[(generationOffset + groupIndex + 4) % termBank.length];
+
+    if (difficultyKey === "easy") {
+      items.push(
+        buildFactorisingItem({ factor, variable, innerCoeff: 1, innerConst: constA, sign: "+", change: items.length === 0 ? "Starting example." : "Only the variable changes." }),
+        buildFactorisingItem({ factor, variable, innerCoeff: 1, innerConst: constA, sign: "-", change: "Only the sign changes inside the bracket." }),
+        buildFactorisingItem({ factor: factorBank[(generationOffset + groupIndex + 1) % factorBank.length], variable, innerCoeff: 1, innerConst: constA, sign: "-", change: "Only the common factor changes." }),
+        buildFactorisingItem({ factor: factorBank[(generationOffset + groupIndex + 1) % factorBank.length], variable, innerCoeff: 1, innerConst: constB, sign: "+", change: "Only the constant inside the bracket changes." })
+      );
+      continue;
+    }
+
+    items.push(
+      buildFactorisingItem({ factor, variable, innerCoeff: coeffA, innerConst: constA, sign: "+", change: items.length === 0 ? "Starting example." : "Only the variable changes." }),
+      buildFactorisingItem({ factor, variable, innerCoeff: coeffA, innerConst: constA, sign: "-", change: "Only the sign changes inside the bracket." }),
+      buildFactorisingItem({ factor: factorBank[(generationOffset + groupIndex + 1) % factorBank.length], variable, innerCoeff: coeffA, innerConst: constA, sign: "-", change: "Only the common factor changes." }),
+      buildFactorisingItem({ factor: factorBank[(generationOffset + groupIndex + 1) % factorBank.length], variable, innerCoeff: coeffB, innerConst: constB, sign: "+", change: "Only the bracket terms change." })
+    );
+  }
+
+  const factoriseItems = items.map((item) => ({
+    question: `Factorise ${item.expanded}.`,
+    answer: item.factorised,
+    change: item.change
+  }));
+  const matchItems = items.map((item) => ({
+    question: `Which factorised form matches ${item.expanded}? A) ${item.factorised} B) ${item.wrong}`,
+    answer: "A",
+    change: item.change
+  }));
+  const completeItems = items.map((item) => ({
+    question: `Complete: ${item.expanded} = ${item.factorisedMissing}.`,
+    answer: item.factorised,
+    change: item.change
+  }));
+  const errorItems = items.map((item) => ({
+    question: `A pupil says ${item.expanded} = ${item.wrong}. Correct the factorisation.`,
+    answer: item.factorised,
+    change: item.change
+  }));
+
+  return { items, factoriseItems, matchItems, completeItems, errorItems };
+}
+
+function buildFactorisingItem({ factor, variable, innerCoeff, innerConst, sign, change }) {
+  const expandedCoeff = factor * innerCoeff;
+  const expandedConst = factor * innerConst;
+  const factorised = `${factor}(${formatVariableTerm(innerCoeff, variable)} ${sign} ${innerConst})`;
+  const expanded = `${formatVariableTerm(expandedCoeff, variable)} ${sign} ${Math.abs(expandedConst)}`;
+  const wrongFactor = `${factor}(${formatVariableTerm(innerCoeff, variable)} ${sign === "+" ? "+" : "-"} ${Math.max(innerConst - 1, 1)})`;
+  const factorisedMissing = `${factor}(${sign === "+" ? "?" : "?"})`;
+
+  return {
+    expanded,
+    factorised,
+    wrong: wrongFactor,
+    factorisedMissing: factorised.replace(/\([^)]*\)/, `(${formatVariableTerm(innerCoeff, variable)} ${sign} ?)`),
+    change
+  };
+}
+
+function generateLinearInequalitiesIntroTeaching(topic, variant, settings, difficultyKey) {
+  const base = getLinearInequalitiesBase(settings, difficultyKey);
+  let sequence;
+
+  if (variant.id === "which-inequality") {
+    sequence = [
+      { question: `Which inequality is true when ${base.items[0].variable} = ${base.items[0].testValue}? A) ${base.items[0].inequality} B) ${base.items[0].wrong}`, answer: "A", change: "Model checking a test value in both inequalities." },
+      { question: `Which inequality is true when ${base.items[1].variable} = ${base.items[1].testValue}? A) ${base.items[1].inequality} B) ${base.items[1].wrong}`, answer: "A", change: "Only the boundary value changes." },
+      { question: `Which inequality is true when ${base.items[2].variable} = ${base.items[2].testValue}? A) ${base.items[2].inequality} B) ${base.items[2].wrong}`, answer: "A", change: "Only the inequality direction changes." }
+    ];
+  } else if (variant.id === "write-the-inequality") {
+    sequence = [
+      { question: `Write an inequality with solution ${base.items[0].solutionText}.`, answer: base.items[0].inequality, change: "Model turning a solution statement into an inequality." },
+      { question: `Write an inequality with solution ${base.items[1].solutionText}.`, answer: base.items[1].inequality, change: "Only the boundary value changes." },
+      { question: `Write an inequality with solution ${base.items[2].solutionText}.`, answer: base.items[2].inequality, change: "Only the inequality direction changes." }
+    ];
+  } else if (variant.id === "error-spotting") {
+    sequence = [
+      { question: `A pupil says the solution to ${base.items[0].inequality} is ${base.items[0].wrongSolutionText}. Correct the solution.`, answer: base.items[0].solutionText, change: "Model checking which values make the inequality true." },
+      { question: `A pupil says the solution to ${base.items[1].inequality} is ${base.items[1].wrongSolutionText}. Correct the solution.`, answer: base.items[1].solutionText, change: "Only the boundary value changes." },
+      { question: `A pupil says the solution to ${base.items[2].inequality} is ${base.items[2].wrongSolutionText}. Correct the solution.`, answer: base.items[2].solutionText, change: "Only the inequality direction changes." }
+    ];
+  } else {
+    sequence = [
+      { question: `Solve ${base.items[0].inequality}.`, answer: base.items[0].solutionText, change: "Model undoing the operation while keeping the inequality meaning." },
+      { question: `Solve ${base.items[1].inequality}.`, answer: base.items[1].solutionText, change: "Only the boundary value changes." },
+      { question: `Solve ${base.items[2].inequality}.`, answer: base.items[2].solutionText, change: "Only the inequality direction changes." }
+    ];
+  }
+
+  return createTeachingSequence(topic, variant, sequence);
+}
+
+function generateLinearInequalitiesIntro(_topic, variant, settings, difficultyKey) {
+  const base = getLinearInequalitiesBase(settings, difficultyKey);
+  if (variant.id === "which-inequality") return { questions: base.whichItems.map((item, index) => ({ question: item.question, answer: item.answer, change: item.change || inequalityChange(index) })) };
+  if (variant.id === "write-the-inequality") return { questions: base.writeItems.map((item, index) => ({ question: item.question, answer: item.answer, change: item.change || inequalityChange(index) })) };
+  if (variant.id === "error-spotting") return { questions: base.errorItems.map((item, index) => ({ question: item.question, answer: item.answer, change: item.change || inequalityChange(index) })) };
+  return { questions: base.solveItems.map((item, index) => ({ question: item.question, answer: item.answer, change: item.change || inequalityChange(index) })) };
+}
+
+function getLinearInequalitiesBase(settings, difficultyKey) {
+  const generationOffset = settings?.generationCounter || 0;
+  const constants = difficultyKey === "easy" ? [3, 4, 5, 6, 7] : difficultyKey === "hard" ? [4, 5, 6, 7, 8, 9] : [3, 4, 5, 6, 7, 8];
+  const solutions = difficultyKey === "easy" ? [4, 5, 6, 7, 8] : difficultyKey === "hard" ? [6, 7, 8, 9, 10] : [5, 6, 7, 8, 9];
+  const coeffs = difficultyKey === "hard" ? [2, 3] : [2];
+  const variableBank = ["x", "y", "n", "p", "m", "t"];
+  const items = [];
+
+  for (let groupIndex = 0; groupIndex < 6; groupIndex += 1) {
+    const variable = variableBank[(generationOffset + groupIndex) % variableBank.length];
+    const constant = constants[(generationOffset + groupIndex) % constants.length];
+    const solution = solutions[(generationOffset + groupIndex) % solutions.length];
+    const coeff = coeffs[groupIndex % coeffs.length];
+
+    items.push(
+      buildInequalityItem({ variable, type: "add-less", constant, solutionValue: solution, change: items.length === 0 ? "Starting example." : "Only the variable changes." }),
+      buildInequalityItem({ variable, type: "add-greater", constant, solutionValue: solution, change: "Only the inequality direction changes." }),
+      buildInequalityItem({ variable, type: "subtract-greater", constant, solutionValue: solution + constant, change: "Only the operation changes." }),
+      buildInequalityItem({ variable, type: "multiply-greater", coeff, constant: coeff * solution, solutionValue: solution, change: "Only the coefficient structure changes." })
+    );
+  }
+
+  const solveItems = items.map((item) => ({
+    question: `Solve ${item.inequality}.`,
+    answer: item.solutionText,
+    change: item.change
+  }));
+  const whichItems = items.map((item) => ({
+    question: `Which inequality is true when ${item.variable} = ${item.testValue}? A) ${item.inequality} B) ${item.wrong}`,
+    answer: "A",
+    change: item.change
+  }));
+  const writeItems = items.map((item) => ({
+    question: `Write an inequality with solution ${item.solutionText}.`,
+    answer: item.inequality,
+    change: item.change
+  }));
+  const errorItems = items.map((item) => ({
+    question: `A pupil says the solution to ${item.inequality} is ${item.wrongSolutionText}. Correct the solution.`,
+    answer: item.solutionText,
+    change: item.change
+  }));
+
+  return { items, solveItems, whichItems, writeItems, errorItems };
+}
+
+function buildInequalityItem({ variable, type, constant, solutionValue, coeff = 2, change }) {
+  if (type === "add-less") {
+    return {
+      variable,
+      inequality: `${variable} + ${constant} < ${solutionValue + constant}`,
+      wrong: `${variable} + ${constant} > ${solutionValue + constant}`,
+      solutionText: `${variable} < ${solutionValue}`,
+      wrongSolutionText: `${variable} > ${solutionValue}`,
+      solutionValue,
+      testValue: solutionValue - 1,
+      change
+    };
+  }
+
+  if (type === "add-greater") {
+    return {
+      variable,
+      inequality: `${variable} + ${constant} > ${solutionValue + constant}`,
+      wrong: `${variable} + ${constant} < ${solutionValue + constant}`,
+      solutionText: `${variable} > ${solutionValue}`,
+      wrongSolutionText: `${variable} < ${solutionValue}`,
+      solutionValue,
+      testValue: solutionValue + 1,
+      change
+    };
+  }
+
+  if (type === "subtract-greater") {
+    return {
+      variable,
+      inequality: `${variable} - ${constant} > ${solutionValue - constant}`,
+      wrong: `${variable} - ${constant} < ${solutionValue - constant}`,
+      solutionText: `${variable} > ${solutionValue}`,
+      wrongSolutionText: `${variable} < ${solutionValue}`,
+      solutionValue,
+      testValue: solutionValue + 1,
+      change
+    };
+  }
+
+  return {
+    variable,
+    inequality: `${coeff}${variable} > ${constant}`,
+    wrong: `${coeff}${variable} < ${constant}`,
+    solutionText: `${variable} > ${trimTrailingZero(constant / coeff)}`,
+    wrongSolutionText: `${variable} < ${trimTrailingZero(constant / coeff)}`,
+    solutionValue,
+    testValue: trimTrailingZero((constant / coeff) + 1),
+    change
+  };
+}
+
+function formatVariableTerm(coefficient, variable) {
+  if (coefficient === 1) return variable;
+  if (coefficient === -1) return `-${variable}`;
+  return `${coefficient}${variable}`;
+}
+
 function percentageChangeTopicChange(index) { return ["Only the percentage changes.", "Only the direction changes.", "Only the original amount changes.", "Only the method changes."][index % 4]; }
 function rearrangingFormulaChange(index) { return ["Only the constant changes.", "Only the sign changes.", "Only the coefficient changes.", "Only the operation changes."][index % 4]; }
+function factorisingChange(index) { return ["Only the sign changes.", "Only the common factor changes.", "Only the bracket terms change.", "Only the representation changes."][index % 4]; }
+function inequalityChange(index) { return ["Only the boundary value changes.", "Only the inequality direction changes.", "Only the operation changes.", "Only the coefficient structure changes."][index % 4]; }
 function percentageAmountChange(index) { return ["Only the percentage changes.", "Only the amount changes.", "Only the method changes.", "Only the missing part changes."][index % 4]; }
 function standardFormChange(index) { return ["Only the coefficient changes.", "Only the exponent changes.", "Only the conversion direction changes.", "Only the comparison target changes."][index % 4]; }
 function indicesChange(index) { return ["Only the base changes.", "Only the exponent changes.", "Only the operation changes.", "Only the missing part changes."][index % 4]; }
@@ -2941,6 +3217,64 @@ function generateRearrangingFormulaReasoning(_topic, variant, _settings, _diffic
   ];
 }
 
+function generateFactorisingReasoning(_topic, variant, _settings, _difficultyKey, _worksheet) {
+  if (variant?.id === "match-factorised-form") {
+    return [
+      { question: `Why is identifying the highest common factor the first thing to do in a factorising question?`, answer: `Because it tells you what can be taken outside the bracket and keeps the factorisation complete.`, change: "Reasoning" },
+      { question: `Why can two factorised forms look similar but only one expand back to the original expression?`, answer: `Because every term inside the bracket must multiply back to the exact expanded terms, including the signs.`, change: "Reasoning" },
+      { question: `How can expanding a proposed factorisation help you check it quickly?`, answer: `If the expanded form matches the original expression exactly, the factorisation is correct.`, change: "Reasoning" }
+    ];
+  }
+  if (variant?.id === "complete-the-factorisation") {
+    return [
+      { question: `Why does completing a factorisation show stronger understanding than copying a known pattern?`, answer: `Because you must reason about what each bracket term must be after the common factor has been removed.`, change: "Reasoning" },
+      { question: `What does each bracket term represent after a common factor has been taken out?`, answer: `Each bracket term is what remains when the original term is divided by the common factor.`, change: "Reasoning" },
+      { question: `Why is it important to check both the variable term and the constant term when a bracket is partly missing?`, answer: `Because both must be consistent with the same common factor and original expression.`, change: "Reasoning" }
+    ];
+  }
+  if (variant?.id === "error-spotting") {
+    return [
+      { question: `What is the most common sign mistake when factorising expressions such as 3x - 9?`, answer: `Forgetting that the negative sign must stay attached to the bracket term when the common factor is taken out.`, change: "Reasoning" },
+      { question: `Why can a factorisation be incomplete even if it is technically true?`, answer: `Because a smaller common factor may have been taken out instead of the highest common factor.`, change: "Reasoning" },
+      { question: `How can you tell whether a pupil has only factorised part of the expression?`, answer: `Expand their answer and check whether every original term is accounted for by the factor and bracket.`, change: "Reasoning" }
+    ];
+  }
+  return [
+    { question: `Why is factorising the reverse of expanding brackets?`, answer: `Because factorising groups common parts back together, while expanding distributes them out.`, change: "Reasoning" },
+    { question: `What stays the same when you move from an expanded expression to a factorised expression?`, answer: `The algebraic value of the expression stays the same, even though the form changes.`, change: "Reasoning" },
+    { question: `Why is it useful to recognise common factors quickly in algebra?`, answer: `It makes simplifying, solving, and spotting structure in expressions much easier.`, change: "Reasoning" }
+  ];
+}
+
+function generateLinearInequalityReasoning(_topic, variant, _settings, _difficultyKey, _worksheet) {
+  if (variant?.id === "which-inequality") {
+    return [
+      { question: `Why is checking one test value a useful way to compare two possible inequalities?`, answer: `Because a correct inequality must be true for values in its solution set and false for values outside it.`, change: "Reasoning" },
+      { question: `Why can two inequalities look almost the same but have opposite solution sets?`, answer: `A small change to the inequality sign reverses which values make the statement true.`, change: "Reasoning" },
+      { question: `How does the boundary value help you decide whether < or > is the right direction?`, answer: `It shows the point where the inequality changes from true to false, so the sign must match the correct side of that point.`, change: "Reasoning" }
+    ];
+  }
+  if (variant?.id === "write-the-inequality") {
+    return [
+      { question: `Why does writing an inequality from a solution statement deepen understanding?`, answer: `Because you must connect the words, the sign, and the boundary value in one consistent algebraic statement.`, change: "Reasoning" },
+      { question: `What is the difference between x > 4 and x < 4 in meaning?`, answer: `They describe values on opposite sides of the same boundary point.`, change: "Reasoning" },
+      { question: `How can you check whether an inequality you wrote is sensible?`, answer: `Choose a value that should satisfy it and substitute to see whether the statement becomes true.`, change: "Reasoning" }
+    ];
+  }
+  if (variant?.id === "error-spotting") {
+    return [
+      { question: `What is the most common misconception when solving simple linear inequalities?`, answer: `Treating the sign casually and not checking which values actually satisfy the inequality after solving.`, change: "Reasoning" },
+      { question: `Why is substitution a good way to catch an incorrect inequality solution?`, answer: `It shows immediately whether the proposed solution makes the original inequality true.`, change: "Reasoning" },
+      { question: `Why do inequalities describe a set of values rather than one single answer?`, answer: `Because many values can make the inequality true, not just one boundary point.`, change: "Reasoning" }
+    ];
+  }
+  return [
+    { question: `What is the main difference between solving an equation and solving an inequality?`, answer: `An equation usually has specific values that make it true, while an inequality describes a whole set of values.`, change: "Reasoning" },
+    { question: `Why is the boundary value still important even though it is not always part of the solution set?`, answer: `It marks the point where the statement changes from true to false.`, change: "Reasoning" },
+    { question: `How can you explain the meaning of x > 5 without using symbols?`, answer: `It means all numbers greater than 5.`, change: "Reasoning" }
+  ];
+}
+
 function buildReasoningSet(topic, variant, settings, difficultyKey, worksheet) {
   const builder = reasoningGenerators[topic.generatorType] || generateGenericReasoning;
   const base = builder(topic, variant, settings, difficultyKey, worksheet).slice(0, 3);
@@ -2983,6 +3317,8 @@ const reasoningGenerators = {
   "simultaneous-equations-intro": generateSimultaneousEquationReasoning,
   "percentage-change": generatePercentageChangeReasoning,
   "rearranging-formulae": generateRearrangingFormulaReasoning,
+  "factorising-single-brackets": generateFactorisingReasoning,
+  "linear-inequalities-intro": generateLinearInequalityReasoning,
   "add-subtract-fractions": generateFractionOperationReasoning,
   "ratio-notation": generateRatioReasoning,
   "order-of-operations": generateOrderReasoning,

@@ -149,9 +149,9 @@ function populateTopicSelect(select, index) {
     const group = document.createElement("optgroup");
     group.label = subject;
 
-    topics.forEach((topic) => {
+    topics.forEach(([topicId, topic]) => {
       const option = document.createElement("option");
-      option.value = topic.id;
+      option.value = topicId;
       option.textContent = topic.label;
       group.appendChild(option);
     });

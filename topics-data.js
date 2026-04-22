@@ -991,6 +991,48 @@
         { id: "error-spotting", label: "Error Spotting", description: "A misconception sequence on sign errors, inverse operations and bracket misuse in rearrangement." }
       ]
     },
+    "factorising-single-brackets": {
+      label: "Factorising into Single Brackets",
+      subject: "Algebra",
+      yearBand: "Year 8",
+      yearTags: ["Year 8", "Year 9", "Year 10"],
+      generatorType: "factorising-single-brackets",
+      difficultyLabel: {
+        easy: "Positive common factors",
+        medium: "Mixed signs and variable structures",
+        hard: "Negative factors and denser linear forms"
+      },
+      objective: "Factorise linear expressions into a single bracket by changing one feature at a time: common factor, sign, constant, variable term, or matching form.",
+      principle: "Keep the expression close and vary one structural feature only: factor size, sign pattern, repeated term, missing part, or representation.",
+      basedOn: "Year 8 factorising single brackets lesson structure",
+      variants: [
+        { id: "factorise-expressions", label: "Factorise Expressions", description: "A direct sequence factorising close linear expressions into a single bracket." },
+        { id: "match-factorised-form", label: "Match the Factorised Form", description: "Pupils decide which factorised form matches a given expanded expression." },
+        { id: "complete-the-factorisation", label: "Complete the Factorisation", description: "A reasoning sequence with one missing factor or missing bracket part." },
+        { id: "error-spotting", label: "Error Spotting", description: "A misconception sequence on missing common factors, sign errors, and incorrect bracket forms." }
+      ]
+    },
+    "linear-inequalities-intro": {
+      label: "Linear Inequalities Intro",
+      subject: "Algebra",
+      yearBand: "Year 8",
+      yearTags: ["Year 8", "Year 9", "Year 10"],
+      generatorType: "linear-inequalities-intro",
+      difficultyLabel: {
+        easy: "One-step additive inequalities",
+        medium: "Mixed one-step forms and direction changes",
+        hard: "Multiplicative forms and stronger inequality reasoning"
+      },
+      objective: "Solve and interpret linear inequalities by changing one feature at a time: operation, sign, boundary value, or statement form.",
+      principle: "Keep the inequality structure stable and vary one feature only: operation, constant, symbol direction, solution set, or checking method.",
+      basedOn: "Year 8 linear inequalities introduction",
+      variants: [
+        { id: "solve-inequalities", label: "Solve Inequalities", description: "A direct sequence solving close one-step inequalities with controlled structural changes." },
+        { id: "which-inequality", label: "Which Inequality?", description: "Pupils decide which inequality matches a given solution value or set." },
+        { id: "write-the-inequality", label: "Write the Inequality", description: "A sequence constructing inequalities from known solution information." },
+        { id: "error-spotting", label: "Error Spotting", description: "A misconception sequence on reversing the sign, checking values, and interpreting solution sets." }
+      ]
+    },
     "equivalent-fractions": {
       label: "Equivalent Fractions",
       subject: "Number",
