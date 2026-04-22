@@ -32,6 +32,8 @@ const generators = {
   pythagoras: generatePythagoras,
   "compound-measures": generateCompoundMeasures,
   "simultaneous-equations-intro": generateSimultaneousEquationsIntro,
+  "percentage-change": generatePercentageChange,
+  "rearranging-formulae": generateRearrangingFormulae,
   "algebraic-notation": generateAlgebraicNotation,
   perimeter: generatePerimeter,
   "angle-facts": generateAngleFacts,
@@ -85,6 +87,8 @@ const teachingGenerators = {
   pythagoras: generatePythagorasTeaching,
   "compound-measures": generateCompoundMeasuresTeaching,
   "simultaneous-equations-intro": generateSimultaneousEquationsIntroTeaching,
+  "percentage-change": generatePercentageChangeTeaching,
+  "rearranging-formulae": generateRearrangingFormulaeTeaching,
   "algebraic-notation": generateAlgebraicNotationTeaching,
   perimeter: generatePerimeterTeaching,
   "angle-facts": generateAngleFactsTeaching,
@@ -551,8 +555,13 @@ function buildBulkQuestionSet(topic, variant, settings, difficultyKey, generator
   const seenQuestions = new Set();
   const seenPrompts = new Set();
   const sequenceBatches = [];
+  const seenBatchSignatures = new Set();
   const supplementalPool = [];
   const blockedPrompts = new Set(blockedPromptTexts.map((text) => (text || "").trim()).filter(Boolean));
+
+  if (forceFresh && seedQuestions?.length) {
+    seenBatchSignatures.add(getBatchSignature(seedQuestions));
+  }
 
   function addToSupplementalPool(item) {
     if (!item) {
@@ -594,7 +603,18 @@ function buildBulkQuestionSet(topic, variant, settings, difficultyKey, generator
       return;
     }
 
-    sequenceBatches.push(items.filter(Boolean));
+    const batch = items.filter(Boolean);
+    const signature = getBatchSignature(batch);
+    if (seenBatchSignatures.has(signature)) {
+      const diversifiedBatch = createRegeneratedBatch(batch, (settings?.generationCounter || 0) + sequenceBatches.length + 1, difficultyKey);
+      const diversifiedSignature = getBatchSignature(diversifiedBatch);
+      seenBatchSignatures.add(diversifiedSignature);
+      sequenceBatches.push(diversifiedBatch);
+      return;
+    }
+
+    seenBatchSignatures.add(signature);
+    sequenceBatches.push(batch);
   }
 
   if (!forceFresh) {
@@ -705,6 +725,24 @@ function finalizeBulkSequence(items) {
   }));
 }
 
+function getBatchSignature(items) {
+  return items.map((item) => getQuestionKey(item)).join("||");
+}
+
+function createRegeneratedBatch(batch, variantSeed, difficultyKey) {
+  const numericBatch = batch.map((item) => createNumericVariant(item, variantSeed, difficultyKey));
+  const canUseNumericBatch = batch.every((item, index) => isValidNumericRegeneration(item, numericBatch[index], variantSeed, difficultyKey));
+
+  if (canUseNumericBatch) {
+    return numericBatch.map((item) => ({
+      ...item,
+      change: "Only the numbers change."
+    }));
+  }
+
+  return batch.map((item) => createPromptVariant(item, variantSeed));
+}
+
 function normalizeBulkChangeNote(change, index) {
   if (change === "Reasoning") {
     return change;
@@ -730,8 +768,7 @@ function normalizeBulkChangeNote(change, index) {
 }
 
 function createNumericVariant(item, variantIndex, difficultyKey) {
-  const deltaBank = difficultyKey === "easy" ? [1, 2] : difficultyKey === "hard" ? [2, 3, 4] : [1, 2, 3];
-  const delta = deltaBank[variantIndex % deltaBank.length];
+  const delta = getVariantDelta(variantIndex, difficultyKey);
   return {
     ...item,
     question: shiftNumbersInText(item.question, delta),
@@ -740,14 +777,77 @@ function createNumericVariant(item, variantIndex, difficultyKey) {
   };
 }
 
+function getVariantDelta(variantIndex, difficultyKey) {
+  const deltaBank = difficultyKey === "easy" ? [1, 2] : difficultyKey === "hard" ? [2, 3, 4] : [1, 2, 3];
+  return deltaBank[variantIndex % deltaBank.length];
+}
+
 function shiftNumbersInText(text, delta) {
   if (!text) return text;
   return String(text).replace(/-?\d+(\.\d+)?/g, (match) => {
     const value = Number(match);
     if (Number.isNaN(value)) return match;
     const shifted = value >= 0 ? value + delta : value - delta;
-    return Number.isInteger(value) ? `${Math.max(shifted, 0)}` : trimTrailingZero(Math.max(shifted, 0));
+    return Number.isInteger(value) ? `${shifted}` : trimTrailingZero(shifted);
   });
+}
+
+function createRegeneratedVariant(item, variantIndex, difficultyKey) {
+  const delta = getVariantDelta(variantIndex, difficultyKey);
+
+  if (item?.diagram?.type === "coordinate-grid") {
+    const points = item.diagram.points || [];
+    const wouldOverflowGrid = points.some((point) => {
+      const nextX = point.x + (point.x >= 0 ? delta : -delta);
+      const nextY = point.y + (point.y >= 0 ? delta : -delta);
+      return nextX < -6 || nextX > 6 || nextY < -6 || nextY > 6;
+    });
+
+    if (wouldOverflowGrid) {
+      return createPromptVariant(item, variantIndex);
+    }
+  }
+
+  const numericVariant = createNumericVariant(item, variantIndex, difficultyKey);
+  const questionChanged = getQuestionPromptText(numericVariant) !== getQuestionPromptText(item);
+  const answerChanged = String(numericVariant.answer || "") !== String(item.answer || "");
+  const originalDiagram = JSON.stringify(item.diagram || null);
+  const shiftedDiagram = JSON.stringify(numericVariant.diagram || null);
+  const diagramChanged = originalDiagram !== shiftedDiagram;
+
+  if ((questionChanged || answerChanged) && (!item.diagram || diagramChanged)) {
+    return numericVariant;
+  }
+
+  return createPromptVariant(item, variantIndex);
+}
+
+function isValidNumericRegeneration(originalItem, numericVariant, variantIndex, difficultyKey) {
+  if (!numericVariant) {
+    return false;
+  }
+
+  if (originalItem?.diagram?.type === "coordinate-grid") {
+    const delta = getVariantDelta(variantIndex, difficultyKey);
+    const points = originalItem.diagram.points || [];
+    const wouldOverflowGrid = points.some((point) => {
+      const nextX = point.x + (point.x >= 0 ? delta : -delta);
+      const nextY = point.y + (point.y >= 0 ? delta : -delta);
+      return nextX < -6 || nextX > 6 || nextY < -6 || nextY > 6;
+    });
+
+    if (wouldOverflowGrid) {
+      return false;
+    }
+  }
+
+  const questionChanged = getQuestionPromptText(numericVariant) !== getQuestionPromptText(originalItem);
+  const answerChanged = String(numericVariant.answer || "") !== String(originalItem.answer || "");
+  const originalDiagram = JSON.stringify(originalItem.diagram || null);
+  const shiftedDiagram = JSON.stringify(numericVariant.diagram || null);
+  const diagramChanged = originalDiagram !== shiftedDiagram;
+
+  return (questionChanged || answerChanged) && (!originalItem.diagram || diagramChanged);
 }
 
 function shiftDiagramNumbers(diagram, delta) {
@@ -893,6 +993,55 @@ function shiftLeafDigit(leaf, delta) {
 function createPromptVariant(item, variantIndex) {
   const wordingChangeNote = "Only the wording changes; the maths stays the same.";
   const prompt = getQuestionPromptText(item);
+  const coordinateReadMatch = prompt.match(/^Read the coordinate of point (.+)\.$/);
+  if (coordinateReadMatch) {
+    const pointLabel = coordinateReadMatch[1];
+    const variants = [
+      `Read the coordinate of point ${pointLabel}.`,
+      `State the coordinate of point ${pointLabel}.`,
+      `What are the coordinates of point ${pointLabel}?`,
+      `Identify the coordinate of point ${pointLabel}.`
+    ];
+    return {
+      ...item,
+      question: variants[variantIndex % variants.length],
+      change: wordingChangeNote
+    };
+  }
+
+  const coordinatePlotMatch = prompt.match(/^Plot the point (.+)\.$/);
+  if (coordinatePlotMatch) {
+    const pointLabel = coordinatePlotMatch[1];
+    const variants = [
+      `Plot the point ${pointLabel}.`,
+      `Mark the point ${pointLabel} on the grid.`,
+      `Show the point ${pointLabel} on the coordinate grid.`,
+      `Place the point ${pointLabel} on the axes.`
+    ];
+    return {
+      ...item,
+      question: variants[variantIndex % variants.length],
+      change: wordingChangeNote
+    };
+  }
+
+  const lineRuleMatch = prompt.match(/^For (y = .+), what is y when x = (.+)\?$/);
+  if (lineRuleMatch) {
+    const rule = lineRuleMatch[1];
+    const xValue = lineRuleMatch[2];
+    const variants = [
+      `For ${rule}, what is y when x = ${xValue}?`,
+      `When x = ${xValue}, what is y on ${rule}?`,
+      `Use ${rule} to find y when x = ${xValue}.`,
+      `Substitute x = ${xValue} into ${rule}. What is y?`
+    ];
+    return {
+      ...item,
+      question: variants[variantIndex % variants.length],
+      change: wordingChangeNote
+    };
+  }
+
   const tableMatch = prompt.match(/^Use the table to find the missing frequency for (.+)\.$/);
   if (tableMatch) {
     const target = tableMatch[1];
@@ -2245,6 +2394,277 @@ function getSimultaneousEquationBase(_settings, difficultyKey) {
   return { pairs, solveItems, solveQuestions, whichItems, whichQuestions, writeItems, writeQuestions, errorQuestions };
 }
 
+function generatePercentageChangeTeaching(topic, variant, settings, difficultyKey) {
+  const base = getPercentageChangeBase(settings, difficultyKey);
+  let sequence;
+
+  if (variant.id === "find-the-percentage-change") {
+    sequence = [
+      { question: `A quantity changes from ${base.cases[0].original} to ${base.cases[0].finalValue}. What is the percentage ${base.cases[0].mode}?`, answer: `${base.cases[0].percent}% ${base.cases[0].mode}`, change: "Model comparing the change against the original amount." },
+      { question: `A quantity changes from ${base.cases[1].original} to ${base.cases[1].finalValue}. What is the percentage ${base.cases[1].mode}?`, answer: `${base.cases[1].percent}% ${base.cases[1].mode}`, change: "Only the percentage changes." },
+      { question: `A quantity changes from ${base.cases[2].original} to ${base.cases[2].finalValue}. What is the percentage ${base.cases[2].mode}?`, answer: `${base.cases[2].percent}% ${base.cases[2].mode}`, change: "Only the direction changes." }
+    ];
+  } else if (variant.id === "reverse-percentage") {
+    sequence = [
+      { question: `After a ${base.cases[0].percent}% ${base.cases[0].mode}, a quantity is ${base.cases[0].finalValue}. What was the original value?`, answer: `${base.cases[0].original}`, change: "Model working back using the percentage multiplier." },
+      { question: `After a ${base.cases[1].percent}% ${base.cases[1].mode}, a quantity is ${base.cases[1].finalValue}. What was the original value?`, answer: `${base.cases[1].original}`, change: "Only the percentage changes." },
+      { question: `After a ${base.cases[2].percent}% ${base.cases[2].mode}, a quantity is ${base.cases[2].finalValue}. What was the original value?`, answer: `${base.cases[2].original}`, change: "Only the direction changes." }
+    ];
+  } else if (variant.id === "error-spotting") {
+    sequence = [
+      { question: `A pupil says ${base.cases[0].original} with a ${base.cases[0].percent}% ${base.cases[0].mode} becomes ${base.errorItems[0].wrongAnswer}. Correct the answer.`, answer: `${base.cases[0].finalValue}`, change: "Model checking the percentage change against the original amount." },
+      { question: `A pupil says ${base.cases[1].original} with a ${base.cases[1].percent}% ${base.cases[1].mode} becomes ${base.errorItems[1].wrongAnswer}. Correct the answer.`, answer: `${base.cases[1].finalValue}`, change: "Only the percentage changes." },
+      { question: `A pupil says ${base.cases[2].original} with a ${base.cases[2].percent}% ${base.cases[2].mode} becomes ${base.errorItems[2].wrongAnswer}. Correct the answer.`, answer: `${base.cases[2].finalValue}`, change: "Only the direction changes." }
+    ];
+  } else {
+    sequence = [
+      { question: `Increase ${base.cases[0].original} by ${base.cases[0].percent}%.`, answer: `${base.cases[0].finalValue}`, change: "Model finding the percentage part and combining it correctly." },
+      { question: `Increase ${base.cases[1].original} by ${base.cases[1].percent}%.`, answer: `${base.cases[1].finalValue}`, change: "Only the percentage changes." },
+      { question: `Decrease ${base.cases[2].original} by ${base.cases[2].percent}%.`, answer: `${base.cases[2].finalValue}`, change: "Only the direction changes." }
+    ];
+  }
+
+  return createTeachingSequence(topic, variant, sequence);
+}
+
+function generatePercentageChange(_topic, variant, settings, difficultyKey) {
+  const base = getPercentageChangeBase(settings, difficultyKey);
+  if (variant.id === "find-the-percentage-change") return { questions: base.changeItems.map((item, index) => ({ question: item.question, answer: item.answer, change: item.change || percentageChangeTopicChange(index) })) };
+  if (variant.id === "reverse-percentage") return { questions: base.reverseItems.map((item, index) => ({ question: item.question, answer: item.answer, change: item.change || percentageChangeTopicChange(index) })) };
+  if (variant.id === "error-spotting") return { questions: base.errorItems.map((item, index) => ({ question: item.question, answer: item.answer, change: item.change || percentageChangeTopicChange(index) })) };
+  return { questions: base.newAmountItems.map((item, index) => ({ question: item.question, answer: item.answer, change: item.change || percentageChangeTopicChange(index) })) };
+}
+
+function getPercentageChangeBase(settings, difficultyKey) {
+  const generationOffset = settings?.generationCounter || 0;
+  const originals = difficultyKey === "easy"
+    ? [40, 60, 80, 100, 120, 160, 180, 200, 240, 300]
+    : difficultyKey === "hard"
+      ? [120, 150, 180, 200, 240, 300, 360, 400, 480, 600]
+      : [80, 100, 120, 160, 180, 200, 240, 300, 360, 400];
+  const percents = difficultyKey === "easy"
+    ? [10, 20, 25, 50]
+    : difficultyKey === "hard"
+      ? [5, 10, 15, 20, 25]
+      : [10, 15, 20, 25, 30];
+  const cases = [];
+  const groupCount = 6;
+
+  for (let groupIndex = 0; groupIndex < groupCount; groupIndex += 1) {
+    const original = originals[(generationOffset + groupIndex) % originals.length];
+    const firstPercent = percents[(generationOffset + groupIndex) % percents.length];
+    const secondPercent = percents[(generationOffset + groupIndex + 1) % percents.length];
+
+    cases.push(
+      { original, percent: firstPercent, mode: "increase", change: cases.length === 0 ? "Starting example." : "Only the original amount changes." },
+      { original, percent: secondPercent, mode: "increase", change: "Only the percentage changes." },
+      { original, percent: secondPercent, mode: "decrease", change: "Only the direction changes." },
+      { original, percent: firstPercent, mode: "decrease", change: "Only the percentage changes." }
+    );
+  }
+
+  const resolvedCases = cases.map((item) => ({
+    ...item,
+    finalValue: percentageChangedValue(item.original, item.percent, item.mode)
+  }));
+
+  const newAmountItems = resolvedCases.map((item) => ({
+    question: `${capitalize(item.mode)} ${item.original} by ${item.percent}%.`,
+    answer: `${item.finalValue}`,
+    change: item.change
+  }));
+
+  const changeItems = resolvedCases.map((item) => ({
+    question: `A quantity changes from ${item.original} to ${item.finalValue}. What is the percentage ${item.mode}?`,
+    answer: `${item.percent}% ${item.mode}`,
+    change: item.change
+  }));
+
+  const reverseItems = resolvedCases.map((item) => ({
+    question: `After a ${item.percent}% ${item.mode}, a quantity is ${item.finalValue}. What was the original value?`,
+    answer: `${item.original}`,
+    change: item.change
+  }));
+
+  const errorItems = resolvedCases.map((item, index) => {
+    const wrongAnswer = item.mode === "increase"
+      ? (index % 2 === 0 ? item.original + item.percent : trimTrailingZero(item.original * (1 + item.percent / 10)))
+      : (index % 2 === 0 ? item.original - item.percent : trimTrailingZero(item.original * (1 - item.percent / 10)));
+    return {
+      question: `A pupil says ${item.original} with a ${item.percent}% ${item.mode} becomes ${wrongAnswer}. Correct the answer.`,
+      answer: `${item.finalValue}`,
+      wrongAnswer: `${wrongAnswer}`,
+      change: item.change
+    };
+  });
+
+  return { cases: resolvedCases, newAmountItems, changeItems, reverseItems, errorItems };
+}
+
+function percentageChangedValue(original, percent, mode) {
+  const multiplier = mode === "increase" ? 1 + (percent / 100) : 1 - (percent / 100);
+  return trimTrailingZero(original * multiplier);
+}
+
+function generateRearrangingFormulaeTeaching(topic, variant, settings, difficultyKey) {
+  const base = getRearrangingFormulaBase(settings, difficultyKey);
+  let sequence;
+
+  if (variant.id === "which-rearrangement") {
+    sequence = [
+      { question: `Which rearrangement is correct for ${base.items[0].formula}? A) ${base.items[0].rearranged} B) ${base.items[0].wrong}`, answer: "A", change: "Model undoing the visible operation in reverse." },
+      { question: `Which rearrangement is correct for ${base.items[1].formula}? A) ${base.items[1].rearranged} B) ${base.items[1].wrong}`, answer: "A", change: "Only the constant changes." },
+      { question: `Which rearrangement is correct for ${base.items[2].formula}? A) ${base.items[2].rearranged} B) ${base.items[2].wrong}`, answer: "A", change: "Only the sign changes." }
+    ];
+  } else if (variant.id === "find-the-subject-value") {
+    sequence = [
+      { question: `Given ${base.items[0].formula} and ${base.items[0].output} = ${base.items[0].outputValue}, find ${base.items[0].subject}.`, answer: `${base.items[0].subject} = ${base.items[0].subjectValue}`, change: "Model rearranging first, then substituting the known values." },
+      { question: `Given ${base.items[1].formula} and ${base.items[1].output} = ${base.items[1].outputValue}, find ${base.items[1].subject}.`, answer: `${base.items[1].subject} = ${base.items[1].subjectValue}`, change: "Only the constant changes." },
+      { question: `Given ${base.items[2].formula} and ${base.items[2].output} = ${base.items[2].outputValue}, find ${base.items[2].subject}.`, answer: `${base.items[2].subject} = ${base.items[2].subjectValue}`, change: "Only the sign changes." }
+    ];
+  } else if (variant.id === "error-spotting") {
+    sequence = [
+      { question: `A pupil rearranges ${base.items[0].formula} to ${base.items[0].wrong}. Correct the rearrangement.`, answer: base.items[0].rearranged, change: "Model checking whether the inverse operation and sign are correct." },
+      { question: `A pupil rearranges ${base.items[1].formula} to ${base.items[1].wrong}. Correct the rearrangement.`, answer: base.items[1].rearranged, change: "Only the constant changes." },
+      { question: `A pupil rearranges ${base.items[2].formula} to ${base.items[2].wrong}. Correct the rearrangement.`, answer: base.items[2].rearranged, change: "Only the sign changes." }
+    ];
+  } else {
+    sequence = [
+      { question: `Make ${base.items[0].subject} the subject in ${base.items[0].formula}.`, answer: base.items[0].rearranged, change: "Model isolating the subject with inverse operations." },
+      { question: `Make ${base.items[1].subject} the subject in ${base.items[1].formula}.`, answer: base.items[1].rearranged, change: "Only the constant changes." },
+      { question: `Make ${base.items[2].subject} the subject in ${base.items[2].formula}.`, answer: base.items[2].rearranged, change: "Only the sign changes." }
+    ];
+  }
+
+  return createTeachingSequence(topic, variant, sequence);
+}
+
+function generateRearrangingFormulae(_topic, variant, settings, difficultyKey) {
+  const base = getRearrangingFormulaBase(settings, difficultyKey);
+  if (variant.id === "which-rearrangement") return { questions: base.whichItems.map((item, index) => ({ question: item.question, answer: item.answer, change: item.change || rearrangingFormulaChange(index) })) };
+  if (variant.id === "find-the-subject-value") return { questions: base.valueItems.map((item, index) => ({ question: item.question, answer: item.answer, change: item.change || rearrangingFormulaChange(index) })) };
+  if (variant.id === "error-spotting") return { questions: base.errorItems.map((item, index) => ({ question: item.question, answer: item.answer, change: item.change || rearrangingFormulaChange(index) })) };
+  return { questions: base.subjectItems.map((item, index) => ({ question: item.question, answer: item.answer, change: item.change || rearrangingFormulaChange(index) })) };
+}
+
+function getRearrangingFormulaBase(settings, difficultyKey) {
+  const specs = getRearrangingFormulaSpecs(difficultyKey, settings?.generationCounter || 0);
+  const items = specs.map((spec) => buildRearrangingFormulaItem(spec));
+  const subjectItems = items.map((item) => ({
+    question: `Make ${item.subject} the subject in ${item.formula}.`,
+    answer: item.rearranged,
+    change: item.change
+  }));
+  const whichItems = items.map((item) => ({
+    question: `Which rearrangement is correct for ${item.formula}? A) ${item.rearranged} B) ${item.wrong}`,
+    answer: "A",
+    change: item.change
+  }));
+  const valueItems = items.map((item) => ({
+    question: `Given ${item.formula} and ${item.output} = ${item.outputValue}, find ${item.subject}.`,
+    answer: `${item.subject} = ${item.subjectValue}`,
+    change: item.change
+  }));
+  const errorItems = items.map((item) => ({
+    question: `A pupil rearranges ${item.formula} to ${item.wrong}. Correct the rearrangement.`,
+    answer: item.rearranged,
+    change: item.change
+  }));
+  return { items, subjectItems, whichItems, valueItems, errorItems };
+}
+
+function getRearrangingFormulaSpecs(difficultyKey, generationOffset = 0) {
+  const constants = difficultyKey === "easy"
+    ? [4, 5, 6, 7, 8, 9, 10, 12]
+    : difficultyKey === "hard"
+      ? [8, 10, 12, 14, 16, 18, 20, 24]
+      : [6, 8, 10, 12, 14, 16, 18, 20];
+  const divisors = difficultyKey === "easy" ? [2, 4, 5] : difficultyKey === "hard" ? [4, 5, 6] : [3, 4, 6];
+  const coeffs = difficultyKey === "easy" ? [2, 3] : difficultyKey === "hard" ? [3, 4, 5] : [2, 3, 4];
+  const subjectLetters = ["x", "m", "p", "a", "t", "n"];
+  const outputLetters = ["y", "q", "r", "b", "s", "v"];
+  const specs = [];
+
+  for (let groupIndex = 0; groupIndex < 6; groupIndex += 1) {
+    const subject = subjectLetters[(generationOffset + groupIndex) % subjectLetters.length];
+    const output = outputLetters[(generationOffset + groupIndex) % outputLetters.length];
+    const constantA = constants[(generationOffset + groupIndex) % constants.length];
+    const constantB = constants[(generationOffset + groupIndex + 1) % constants.length];
+    const coeffA = coeffs[(generationOffset + groupIndex) % coeffs.length];
+    const coeffB = coeffs[(generationOffset + groupIndex + 1) % coeffs.length];
+    const divisor = divisors[(generationOffset + groupIndex) % divisors.length];
+    const subjectValue = difficultyKey === "easy" ? 6 + groupIndex : difficultyKey === "hard" ? 10 + groupIndex : 8 + groupIndex;
+
+    specs.push(
+      { output, subject, type: "add", constant: constantA, subjectValue, change: specs.length === 0 ? "Starting example." : "Only the subject letter changes." },
+      { output, subject, type: "subtract", constant: constantA, subjectValue: subjectValue + constantA, change: "Only the sign changes." },
+      { output, subject, type: "coeff-minus", coeff: coeffA, constant: constantB, subjectValue: subjectValue + coeffA, change: "Only the coefficient structure changes." },
+      { output, subject, type: "coeff-plus", coeff: coeffB, constant: constantB, subjectValue: subjectValue + coeffB, change: "Only the coefficient changes." }
+    );
+
+    if (groupIndex < 3) {
+      specs.push(
+        { output, subject, type: "divide", divisor, subjectValue: divisor * (subjectValue + 1), change: "Only the operation changes." },
+        { output, subject, type: "divide-plus", divisor, constant: difficultyKey === "easy" ? 2 : 3, subjectValue: divisor * (subjectValue + 2), change: "Only one extra additive term is introduced." }
+      );
+    }
+  }
+
+  return specs;
+}
+
+function buildRearrangingFormulaItem(spec) {
+  const formula = formatFormulaFromSpec(spec);
+  const rearranged = formatRearrangedFromSpec(spec);
+  const wrong = formatWrongRearrangementFromSpec(spec);
+  const outputValue = trimTrailingZero(evaluateFormulaOutput(spec, spec.subjectValue));
+  return {
+    ...spec,
+    formula,
+    rearranged,
+    wrong,
+    outputValue
+  };
+}
+
+function formatFormulaFromSpec(spec) {
+  if (spec.type === "add") return `${spec.output} = ${spec.subject} + ${spec.constant}`;
+  if (spec.type === "subtract") return `${spec.output} = ${spec.subject} - ${spec.constant}`;
+  if (spec.type === "coeff-minus") return `${spec.output} = ${spec.coeff}${spec.subject} - ${spec.constant}`;
+  if (spec.type === "coeff-plus") return `${spec.output} = ${spec.coeff}${spec.subject} + ${spec.constant}`;
+  if (spec.type === "divide") return `${spec.output} = ${spec.subject} / ${spec.divisor}`;
+  return `${spec.output} = ${spec.subject} / ${spec.divisor} + ${spec.constant}`;
+}
+
+function formatRearrangedFromSpec(spec) {
+  if (spec.type === "add") return `${spec.subject} = ${spec.output} - ${spec.constant}`;
+  if (spec.type === "subtract") return `${spec.subject} = ${spec.output} + ${spec.constant}`;
+  if (spec.type === "coeff-minus") return `${spec.subject} = (${spec.output} + ${spec.constant}) / ${spec.coeff}`;
+  if (spec.type === "coeff-plus") return `${spec.subject} = (${spec.output} - ${spec.constant}) / ${spec.coeff}`;
+  if (spec.type === "divide") return `${spec.subject} = ${spec.output} * ${spec.divisor}`;
+  return `${spec.subject} = (${spec.output} - ${spec.constant}) * ${spec.divisor}`;
+}
+
+function formatWrongRearrangementFromSpec(spec) {
+  if (spec.type === "add") return `${spec.subject} = ${spec.output} + ${spec.constant}`;
+  if (spec.type === "subtract") return `${spec.subject} = ${spec.output} - ${spec.constant}`;
+  if (spec.type === "coeff-minus") return `${spec.subject} = (${spec.output} - ${spec.constant}) / ${spec.coeff}`;
+  if (spec.type === "coeff-plus") return `${spec.subject} = (${spec.output} + ${spec.constant}) / ${spec.coeff}`;
+  if (spec.type === "divide") return `${spec.subject} = ${spec.output} / ${spec.divisor}`;
+  return `${spec.subject} = ${spec.output} * ${spec.divisor} + ${spec.constant}`;
+}
+
+function evaluateFormulaOutput(spec, subjectValue) {
+  if (spec.type === "add") return subjectValue + spec.constant;
+  if (spec.type === "subtract") return subjectValue - spec.constant;
+  if (spec.type === "coeff-minus") return (spec.coeff * subjectValue) - spec.constant;
+  if (spec.type === "coeff-plus") return (spec.coeff * subjectValue) + spec.constant;
+  if (spec.type === "divide") return subjectValue / spec.divisor;
+  return (subjectValue / spec.divisor) + spec.constant;
+}
+
+function percentageChangeTopicChange(index) { return ["Only the percentage changes.", "Only the direction changes.", "Only the original amount changes.", "Only the method changes."][index % 4]; }
+function rearrangingFormulaChange(index) { return ["Only the constant changes.", "Only the sign changes.", "Only the coefficient changes.", "Only the operation changes."][index % 4]; }
 function percentageAmountChange(index) { return ["Only the percentage changes.", "Only the amount changes.", "Only the method changes.", "Only the missing part changes."][index % 4]; }
 function standardFormChange(index) { return ["Only the coefficient changes.", "Only the exponent changes.", "Only the conversion direction changes.", "Only the comparison target changes."][index % 4]; }
 function indicesChange(index) { return ["Only the base changes.", "Only the exponent changes.", "Only the operation changes.", "Only the missing part changes."][index % 4]; }
@@ -2463,6 +2883,64 @@ function generateSimultaneousEquationReasoning(_topic, variant, _settings, _diff
   ];
 }
 
+function generatePercentageChangeReasoning(_topic, variant, _settings, _difficultyKey, _worksheet) {
+  if (variant?.id === "find-the-percentage-change") {
+    return [
+      { question: `Why must the percentage change be compared with the original amount rather than the final amount?`, answer: `Because percentage change describes how much the original amount has changed by.`, change: "Reasoning" },
+      { question: `A quantity goes from 80 to 100. Why is the percentage increase not 20%?`, answer: `The increase is 20, but 20 is a quarter of 80, so the increase is 25%.`, change: "Reasoning" },
+      { question: `How can knowing common fraction-percentage links help you spot a percentage change quickly?`, answer: `They help you recognise when the change is a half, quarter, fifth, or tenth of the original amount.`, change: "Reasoning" }
+    ];
+  }
+  if (variant?.id === "reverse-percentage") {
+    return [
+      { question: `Why is reverse percentage not the same as simply undoing by subtracting the percentage number?`, answer: `Because the percentage change acts multiplicatively through a multiplier, not by adding or subtracting the percent itself.`, change: "Reasoning" },
+      { question: `If a price after a 20% increase is 96, why is dividing by 1.2 the correct reverse step?`, answer: `Because 96 represents 120% of the original value.`, change: "Reasoning" },
+      { question: `How can you check a reverse-percentage answer quickly?`, answer: `Apply the stated percentage increase or decrease to your original answer and see whether it matches the final value.`, change: "Reasoning" }
+    ];
+  }
+  if (variant?.id === "error-spotting") {
+    return [
+      { question: `What is the most common mistake when increasing or decreasing by a percentage?`, answer: `Treating the percentage as a fixed number to add or subtract instead of a proportion of the original amount.`, change: "Reasoning" },
+      { question: `Why can an incorrect percentage-change answer still look plausible?`, answer: `Because it may be close in size even though the method is wrong, especially if the original number is not checked carefully.`, change: "Reasoning" },
+      { question: `What is one reliable way to reject a wrong percentage-change answer?`, answer: `Estimate the change first and compare whether the answer is sensible for that percentage of the original amount.`, change: "Reasoning" }
+    ];
+  }
+  return [
+    { question: `Why is a percentage multiplier often an efficient method for percentage change?`, answer: `It combines the original amount and the change in one calculation.`, change: "Reasoning" },
+    { question: `What is the difference between a 15% increase and a 15% decrease in method?`, answer: `The increase uses a multiplier above 1, while the decrease uses a multiplier below 1.`, change: "Reasoning" },
+    { question: `How can benchmark percentages help you judge whether a final answer is sensible?`, answer: `They let you estimate whether the final amount should be a little bigger, much bigger, or smaller than the original.`, change: "Reasoning" }
+  ];
+}
+
+function generateRearrangingFormulaReasoning(_topic, variant, _settings, _difficultyKey, _worksheet) {
+  if (variant?.id === "which-rearrangement") {
+    return [
+      { question: `What is the first thing to check when deciding whether a rearrangement is correct?`, answer: `Check whether the target subject is isolated on one side of the equation.`, change: "Reasoning" },
+      { question: `Why can one incorrect sign make a rearranged formula wrong even if the letters look right?`, answer: `Because rearranging depends on inverse operations, so the sign must reverse correctly when terms move.`, change: "Reasoning" },
+      { question: `How can substitution help you test whether a rearranged formula is correct?`, answer: `Choose values, use one form to calculate, and then see if the rearranged form recovers the same subject value.`, change: "Reasoning" }
+    ];
+  }
+  if (variant?.id === "find-the-subject-value") {
+    return [
+      { question: `Why is it often safer to rearrange fully before substituting numbers?`, answer: `Because it keeps the structure clear and reduces the chance of undoing steps in the wrong order.`, change: "Reasoning" },
+      { question: `A formula has a coefficient and a constant. Why must the constant be undone before dividing by the coefficient?`, answer: `Because the constant is outside the multiplication with the subject, so it has to be removed first.`, change: "Reasoning" },
+      { question: `How can you check a value found from a rearranged formula?`, answer: `Substitute it back into the original formula and verify that it produces the stated known value.`, change: "Reasoning" }
+    ];
+  }
+  if (variant?.id === "error-spotting") {
+    return [
+      { question: `Why do brackets matter in rearranged formulas such as x = (y - 6) / 3?`, answer: `They show the entire term that must be undone before the final division or multiplication.`, change: "Reasoning" },
+      { question: `What is the most common structural mistake when rearranging a linear formula?`, answer: `Undoing operations in the wrong order or reversing a sign incorrectly.`, change: "Reasoning" },
+      { question: `How can reading the original formula from the subject outward help prevent mistakes?`, answer: `It reveals the order in which operations were applied, so you can reverse them accurately.`, change: "Reasoning" }
+    ];
+  }
+  return [
+    { question: `What does it mean to make a letter the subject of a formula?`, answer: `It means isolating that letter so it stands alone on one side of the equation.`, change: "Reasoning" },
+    { question: `Why is rearranging a formula really an inverse-operation task?`, answer: `Because you undo the operations that are attached to the subject, in reverse order.`, change: "Reasoning" },
+    { question: `Why do two formulas that look different sometimes represent the same relationship?`, answer: `Because one may be a rearranged version of the other with the same equality preserved.`, change: "Reasoning" }
+  ];
+}
+
 function buildReasoningSet(topic, variant, settings, difficultyKey, worksheet) {
   const builder = reasoningGenerators[topic.generatorType] || generateGenericReasoning;
   const base = builder(topic, variant, settings, difficultyKey, worksheet).slice(0, 3);
@@ -2503,6 +2981,8 @@ const reasoningGenerators = {
   pythagoras: generatePythagorasReasoning,
   "compound-measures": generateCompoundMeasureReasoning,
   "simultaneous-equations-intro": generateSimultaneousEquationReasoning,
+  "percentage-change": generatePercentageChangeReasoning,
+  "rearranging-formulae": generateRearrangingFormulaReasoning,
   "add-subtract-fractions": generateFractionOperationReasoning,
   "ratio-notation": generateRatioReasoning,
   "order-of-operations": generateOrderReasoning,

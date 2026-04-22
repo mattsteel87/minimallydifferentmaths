@@ -949,6 +949,48 @@
         { id: "error-spotting", label: "Error Spotting", description: "A misconception sequence on elimination and substitution mistakes." }
       ]
     },
+    "percentage-change": {
+      label: "Percentage Change",
+      subject: "Ratio and Proportion",
+      yearBand: "Year 8",
+      yearTags: ["Year 8", "Year 9", "Year 10"],
+      generatorType: "percentage-change",
+      difficultyLabel: {
+        easy: "Simple increases and decreases",
+        medium: "Mixed percentage change and reverse percentage",
+        hard: "Less direct percentage structures and stronger reasoning"
+      },
+      objective: "Increase, decrease and reverse percentages by changing one feature at a time: percentage, direction, original value, or method.",
+      principle: "Keep the multiplicative percentage structure stable and vary one feature only: original amount, percentage rate, increase or decrease direction, or whether the whole is missing.",
+      basedOn: "Year 8 percentage change lesson structure",
+      variants: [
+        { id: "find-the-new-amount", label: "Find the New Amount", description: "A direct sequence increasing and decreasing amounts with one controlled change each time." },
+        { id: "find-the-percentage-change", label: "Find the Percentage Change", description: "Pupils work out the percentage increase or decrease between close pairs of values." },
+        { id: "reverse-percentage", label: "Reverse Percentage", description: "A sequence working back to the original amount from a final value and a known percentage change." },
+        { id: "error-spotting", label: "Error Spotting", description: "A misconception sequence on percentage multipliers and common increase or decrease mistakes." }
+      ]
+    },
+    "rearranging-formulae": {
+      label: "Rearranging Formulae",
+      subject: "Algebra",
+      yearBand: "Year 9",
+      yearTags: ["Year 9", "Year 10", "Year 11"],
+      generatorType: "rearranging-formulae",
+      difficultyLabel: {
+        easy: "One-step formula rearrangements",
+        medium: "Mixed coefficient and additive forms",
+        hard: "Less direct multi-step linear formulae"
+      },
+      objective: "Rearrange linear formulae by changing one feature at a time: sign, coefficient, divisor, subject letter, or final calculation use.",
+      principle: "Keep the formula structure close and vary one feature only: operation, constant, coefficient, subject, or check method.",
+      basedOn: "Year 9 rearranging formulae lesson structure",
+      variants: [
+        { id: "make-the-subject", label: "Make the Subject", description: "A direct sequence rearranging close formulae to make a named letter the subject." },
+        { id: "which-rearrangement", label: "Which Rearrangement?", description: "Pupils decide which rearranged form is correct when only one structural feature changes." },
+        { id: "find-the-subject-value", label: "Find the Subject Value", description: "A sequence using the rearranged formula to calculate an unknown value from given numbers." },
+        { id: "error-spotting", label: "Error Spotting", description: "A misconception sequence on sign errors, inverse operations and bracket misuse in rearrangement." }
+      ]
+    },
     "equivalent-fractions": {
       label: "Equivalent Fractions",
       subject: "Number",
