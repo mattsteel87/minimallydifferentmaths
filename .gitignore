@@ -7,3 +7,10 @@ GEOMETRY_MEASURE_STRAND_AUDIT.md
 NUMBER_STRAND_AUDIT.md
 STATISTICS_PROBABILITY_STRAND_AUDIT.md
 YEAR7_COVERAGE_BACKLOG.md
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
